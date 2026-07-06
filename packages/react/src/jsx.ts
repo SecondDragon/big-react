@@ -93,6 +93,7 @@ export const jsxDEV = (type: ElementType, config: any, maybeKey: any) => {
 			}
 			continue;
 		}
+		// 判断是config自己的，还是原型上的，只要是自己的都放上去
 		if ({}.hasOwnProperty.call(config, prop)) {
 			props[prop] = val;
 		}
