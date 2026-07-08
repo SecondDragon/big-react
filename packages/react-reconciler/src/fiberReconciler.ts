@@ -12,7 +12,11 @@ import { scheduleUpdateOnFiber } from './workLoop';
 
 export function createContainer(container: Container) {
 	const hostRootFiber = new FiberNode(HostRoot, {}, null);
+	/**
+	 * 这里就实现了创建hostRootFiber和创建FiberRootNode，让他们互相指向
+	 */
 	const root = new FiberRootNode(container, hostRootFiber);
+	// 创建hostRootFiber的更新队列
 	hostRootFiber.updateQueue = createUpdateQueue();
 	return root;
 }

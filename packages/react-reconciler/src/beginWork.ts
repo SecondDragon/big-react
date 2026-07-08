@@ -8,6 +8,7 @@ import { HostRoot, HostComponent, HostText } from './workTags';
 import { processUpdateQueue, UpdateQueue } from './updateQueue';
 import { ReactElementType } from 'shared/ReactTypes';
 import { mountChildFibers, reconcilerChildFibers } from './childFibers';
+import { __DEV__ } from './reconciler';
 
 // 返回当前fiber节点的子节点
 export const beginWork = (wip: FiberNode) => {

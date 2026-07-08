@@ -29,7 +29,6 @@
 		"commitlint": "^17.1.2",
 		"eslint": "^8.25.0",
 		"eslint-config-prettier": "^8.5.0",
-		"eslint-plugin,": "link:@typescript-eslint/eslint-plugin,",
 		"eslint-plugin-prettier": "^4.2.1",
 		"husky": "^8.0.1",
 		"jest": "^29.3.1",

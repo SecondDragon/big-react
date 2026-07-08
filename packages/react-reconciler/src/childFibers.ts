@@ -3,6 +3,7 @@ import { ReactElementType } from 'shared/ReactTypes';
 import { REACT_ELEMENT_TYPE } from 'shared/ReactSymbols';
 import { HostText } from './workTags';
 import { Placement } from './fiberFlags';
+import { __DEV__ } from './reconciler';
 
 function ChildReconciler(shouldTrackSideEffects: boolean) {
 	function reconcileSingleElement(

@@ -2,7 +2,8 @@
 
 ## 配置背景
 
-项目使用 `@babel/plugin-transform-react-jsx`，在 React 17+ 的 automatic runtime 模式下，JSX 会被编译成调用 `jsx`（生产）或 `jsxDEV`（开发）函数。
+项目使用 `@babel/plugin-transform-react-jsx`，在 React 17+ 的 automatic runtime 模式下，JSX 会被编译成调用 `jsx`（生产）或
+`jsxDEV`（开发）函数。
 
 `packages/react/index.ts` 将 `jsxDEV` 暴露为 `createElement`。
 
@@ -12,24 +13,24 @@
 
 ```tsx
 function UserCard({ user, isAdmin }) {
-  return (
-    <div className="card" id={`card-${user.id}`}>
-      <h2 className="title">
-        {user.name}
-        {isAdmin && <span className="badge">Admin</span>}
-      </h2>
-      <div className="body" key={user.id} ref={cardRef}>
-        <p>{user.bio}</p>
-        {user.tags.map(tag => (
-          <span key={tag} className="tag">{tag}</span>
-        ))}
-      </div>
-      <footer>
-        <a href={`/profile/${user.id}`}>View Profile</a>
-        {isAdmin && <button onClick={handleDelete}>Delete</button>}
-      </footer>
-    </div>
-  );
+	return (
+		<div className="card" id={`card-${user.id}`}>
+			<h2 className="title">
+				{user.name}
+				{isAdmin && <span className="badge">Admin</span>}
+			</h2>
+			<div className="body" key={user.id} ref={cardRef}>
+				<p>{user.bio}</p>
+				{user.tags.map(tag => (
+					<span key={tag} className="tag">{tag}</span>
+				))}
+			</div>
+			<footer>
+				<a href={`/profile/${user.id}`}>View Profile</a>
+				{isAdmin && <button onClick={handleDelete}>Delete</button>}
+			</footer>
+		</div>
+	);
 }
 ```
 
@@ -43,49 +44,49 @@ function UserCard({ user, isAdmin }) {
 import { jsx as _jsx, jsxs as _jsxs } from 'react/jsx-runtime';
 
 function UserCard({ user, isAdmin }) {
-  return _jsxs('div', {
-    className: 'card',
-    id: `card-${user.id}`,
-    children: [
-      _jsxs('h2', {
-        className: 'title',
-        children: [
-          user.name,
-          isAdmin && _jsx('span', {
-            className: 'badge',
-            children: 'Admin'
-          })
-        ]
-      }),
-      _jsx('div', {
-        className: 'body',
-        key: user.id,
-        ref: cardRef,
-        children: [
-          _jsx('p', { children: user.bio }),
-          user.tags.map(tag =>
-            _jsx('span', {
-              key: tag,
-              className: 'tag',
-              children: tag
-            })
-          )
-        ]
-      }),
-      _jsxs('footer', {
-        children: [
-          _jsx('a', {
-            href: `/profile/${user.id}`,
-            children: 'View Profile'
-          }),
-          isAdmin && _jsx('button', {
-            onClick: handleDelete,
-            children: 'Delete'
-          })
-        ]
-      })
-    ]
-  });
+	return _jsxs('div', {
+		className: 'card',
+		id: `card-${user.id}`,
+		children: [
+			_jsxs('h2', {
+				className: 'title',
+				children: [
+					user.name,
+					isAdmin && _jsx('span', {
+						className: 'badge',
+						children: 'Admin'
+					})
+				]
+			}),
+			_jsx('div', {
+				className: 'body',
+				key: user.id,
+				ref: cardRef,
+				children: [
+					_jsx('p', { children: user.bio }),
+					user.tags.map(tag =>
+						_jsx('span', {
+							key: tag,
+							className: 'tag',
+							children: tag
+						})
+					)
+				]
+			}),
+			_jsxs('footer', {
+				children: [
+					_jsx('a', {
+						href: `/profile/${user.id}`,
+						children: 'View Profile'
+					}),
+					isAdmin && _jsx('button', {
+						onClick: handleDelete,
+						children: 'Delete'
+					})
+				]
+			})
+		]
+	});
 }
 ```
 
@@ -99,38 +100,38 @@ function UserCard({ user, isAdmin }) {
 
 入口：`jsx('div', config, ...children)`
 
-| 阶段 | 代码 | 结果 |
-|------|------|------|
-| 入口参数 | `type = 'div'`, `config = { className: 'card', id: 'card-42' }`, `maybeChildren = [ [...子元素数组] ]` | |
-| 提取 key | `config` 中没有 `key` | `key = null` |
-| 提取 ref | `config` 中没有 `ref` | `ref = null` |
-| 遍历 config | 复制 `className`、`id` 到 `props` | `props = { className: 'card', id: 'card-42' }` |
-| 处理 children | `maybeChildren.length === 1` | `props.children = 子元素数组`（扁平化为一个属性） |
-| 返回 | `ReactElement('div', null, null, props)` | ✅ 完成 |
+| 阶段          | 代码                                                                                                | 结果                                             |
+|-------------|---------------------------------------------------------------------------------------------------|------------------------------------------------|
+| 入口参数        | `type = 'div'`, `config = { className: 'card', id: 'card-42' }`, `maybeChildren = [ [...子元素数组] ]` |                                                |
+| 提取 key      | `config` 中没有 `key`                                                                                | `key = null`                                   |
+| 提取 ref      | `config` 中没有 `ref`                                                                                | `ref = null`                                   |
+| 遍历 config   | 复制 `className`、`id` 到 `props`                                                                     | `props = { className: 'card', id: 'card-42' }` |
+| 处理 children | `maybeChildren.length === 1`                                                                      | `props.children = 子元素数组`（扁平化为一个属性）             |
+| 返回          | `ReactElement('div', null, null, props)`                                                          | ✅ 完成                                           |
 
 ### 2.2 带 key 和 ref 的内层：`_jsx('div', { key, ref, ... })`
 
 入口：`jsx('div', config)`
 
-| 阶段 | 代码 | 结果 |
-|------|------|------|
-| 入口参数 | `type = 'div'`, `config = { className: 'body', key: user.id, ref: cardRef, children: [...] }` | |
-| 提取 key | `config.key = user.id`（假设为 42）| `key = '42'`（字符串化） |
-| 提取 ref | `config.ref = cardRef` | `ref = cardRef` |
-| 遍历 config | 跳过 `key` 和 `ref`，复制 `className` | `props = { className: 'body', children: [...] }` |
-| 处理 children | config 里已有 `children`，无需从 `maybeChildren` 获取 | 保留 `config.children` |
-| 返回 | `ReactElement('div', '42', cardRef, props)` | ✅ 完成 |
+| 阶段          | 代码                                                                                            | 结果                                               |
+|-------------|-----------------------------------------------------------------------------------------------|--------------------------------------------------|
+| 入口参数        | `type = 'div'`, `config = { className: 'body', key: user.id, ref: cardRef, children: [...] }` |                                                  |
+| 提取 key      | `config.key = user.id`（假设为 42）                                                                | `key = '42'`（字符串化）                               |
+| 提取 ref      | `config.ref = cardRef`                                                                        | `ref = cardRef`                                  |
+| 遍历 config   | 跳过 `key` 和 `ref`，复制 `className`                                                               | `props = { className: 'body', children: [...] }` |
+| 处理 children | config 里已有 `children`，无需从 `maybeChildren` 获取                                                  | 保留 `config.children`                             |
+| 返回          | `ReactElement('div', '42', cardRef, props)`                                                   | ✅ 完成                                             |
 
 ### 2.3 条件渲染：`isAdmin && <span className="badge">Admin</span>`
 
 编译为：`isAdmin && _jsx('span', { className: 'badge', children: 'Admin' })`
 
-| 阶段 | 结果 |
-|------|------|
-| `isAdmin = true` | 执行 `jsx`，返回完整的 ReactElement |
-| `isAdmin = false` | 表达式值为 `false`，作为布尔值留在父节点的 `children` 数组中 |
-| `jsx` 内部 | `type = 'span'`, 无 `key`, 无 `ref`, `props = { className: 'badge', children: 'Admin' }` |
-| 返回 | `ReactElement('span', null, null, props)` |
+| 阶段                | 结果                                                                                     |
+|-------------------|----------------------------------------------------------------------------------------|
+| `isAdmin = true`  | 执行 `jsx`，返回完整的 ReactElement                                                            |
+| `isAdmin = false` | 表达式值为 `false`，作为布尔值留在父节点的 `children` 数组中                                               |
+| `jsx` 内部          | `type = 'span'`, 无 `key`, 无 `ref`, `props = { className: 'badge', children: 'Admin' }` |
+| 返回                | `ReactElement('span', null, null, props)`                                              |
 
 ### 2.4 `Array.map` 中的 JSX：`{user.tags.map(tag => <span key={tag} className="tag">{tag}</span>)}`
 
@@ -138,11 +139,11 @@ function UserCard({ user, isAdmin }) {
 
 注意：`key` 作为 `config` 属性传入（自动 runtime 处理方式）。
 
-| 阶段 | 结果 |
-|------|------|
-| `map` 执行 | 对每个 tag 调用 `_jsx`，生成一个 ReactElement 数组 |
-| `key = 'frontend'` | 从 `config.key` 提取，`key = '' + 'frontend'` |
-| 返回 | `ReactElement('span', 'frontend', null, { className: 'tag', children: 'frontend' })` |
+| 阶段                 | 结果                                                                                   |
+|--------------------|--------------------------------------------------------------------------------------|
+| `map` 执行           | 对每个 tag 调用 `_jsx`，生成一个 ReactElement 数组                                               |
+| `key = 'frontend'` | 从 `config.key` 提取，`key = '' + 'frontend'`                                            |
+| 返回                 | `ReactElement('span', 'frontend', null, { className: 'tag', children: 'frontend' })` |
 
 ---
 
@@ -188,7 +189,9 @@ function UserCard({ user, isAdmin }) {
         "$$typeof": Symbol(react.element),
         "type": "div",
         "key": "42",
-        "ref": { "current": null },
+        "ref": {
+          "current": null
+        },
         "props": {
           "className": "body",
           "children": [
@@ -197,7 +200,9 @@ function UserCard({ user, isAdmin }) {
               "type": "p",
               "key": null,
               "ref": null,
-              "props": { "children": "张三的简介" },
+              "props": {
+                "children": "张三的简介"
+              },
               "__mark": "stl"
             },
             [
@@ -206,7 +211,10 @@ function UserCard({ user, isAdmin }) {
                 "type": "span",
                 "key": "frontend",
                 "ref": null,
-                "props": { "className": "tag", "children": "frontend" },
+                "props": {
+                  "className": "tag",
+                  "children": "frontend"
+                },
                 "__mark": "stl"
               },
               {
@@ -214,7 +222,10 @@ function UserCard({ user, isAdmin }) {
                 "type": "span",
                 "key": "react",
                 "ref": null,
-                "props": { "className": "tag", "children": "react" },
+                "props": {
+                  "className": "tag",
+                  "children": "react"
+                },
                 "__mark": "stl"
               }
             ]
@@ -234,7 +245,10 @@ function UserCard({ user, isAdmin }) {
               "type": "a",
               "key": null,
               "ref": null,
-              "props": { "href": "/profile/42", "children": "View Profile" },
+              "props": {
+                "href": "/profile/42",
+                "children": "View Profile"
+              },
               "__mark": "stl"
             },
             {
@@ -242,7 +256,10 @@ function UserCard({ user, isAdmin }) {
               "type": "button",
               "key": null,
               "ref": null,
-              "props": { "onClick": handleDelete, "children": "Delete" },
+              "props": {
+                "onClick": handleDelete,
+                "children": "Delete"
+              },
               "__mark": "stl"
             }
           ]
@@ -255,6 +272,8 @@ function UserCard({ user, isAdmin }) {
 }
 ```
 
+`其实从这里面我们就能发现一点，react是没有编译优化的` ,他的编译器就只是简单的生成jsx函数,被调用就会生成ReactElement，是一个纯的运行时框架
+当然，react19好像有一些编译期优化
 ---
 
 ## 关键观察
@@ -272,10 +291,10 @@ _jsx('div', { key: user.id, className: 'body' })
 
 ```ts
 if (prop === 'key') {
-  if (val !== undefined) {
-    key = '' + val;
-  }
-  continue;
+	if (val !== undefined) {
+		key = '' + val;
+	}
+	continue;
 }
 ```
 
@@ -285,10 +304,10 @@ if (prop === 'key') {
 
 ```ts
 if (prop === 'ref') {
-  if (val !== undefined) {
-    ref = val;
-  }
-  continue;
+	if (val !== undefined) {
+		ref = val;
+	}
+	continue;
 }
 ```
 
@@ -332,12 +351,13 @@ flowchart LR
         F1["Fiber(div)<br/>&nbsp;&nbsp;stateNode: &lt;div&gt;<br/>&nbsp;&nbsp;flags: Placement"]
     end
 
-    SRC -->|"Babel 编译<br/>automatic runtime"| COMP
-    COMP -->|"执行 jsx(type, config, ...children)"| RE
-    RE -->|"reconciler 消费<br/>createFiberFromElement"| FIB
+    SRC -->|" Babel 编译<br/>automatic runtime "| COMP
+    COMP -->|" 执行 jsx(type, config, ...children) "| RE
+    RE -->|" reconciler 消费<br/>createFiberFromElement "| FIB
 ```
 
-**核心结论**：`jsx` 函数是一个纯数据转换器，将 Babel 编译后的扁平调用（`type + config + children`）转换为带 `$$typeof` 标记的结构化 ReactElement 对象。`key` 和 `ref` 作为特殊属性从 config 中分离到顶层，其余属性归入 `props`。
+**核心结论**：`jsx` 函数是一个纯数据转换器，将 Babel 编译后的扁平调用（`type + config + children`）转换为带 `$$typeof`标记的结构化
+ReactElement 对象。`key` 和 `ref` 作为特殊属性从 config 中分离到顶层，其余属性归入 `props`。
 
 ---
 
@@ -347,15 +367,15 @@ flowchart LR
 
 ### 核心区别
 
-| 维度 | ReactElement 树 | Fiber 树 |
-|------|----------------|----------|
-| **本质** | 普通 JS 对象，由 `jsx()` 创建 | 类实例（`FiberNode`），由 reconciler 管理 |
-| **生命周期** | **每次 render 重建**，不持久 | **持久存在**，跨 render 复用（通过 `alternate` 双缓冲） |
-| **可变性** | **不可变**，创建后不修改 | **可变**，作为工作台不断修改 `pendingProps`、`flags`、`memoizedState` |
-| **树结构** | 嵌套树：`type.props.children` 单向引用 | 三重指针链表：`return` / `child` / `sibling` |
-| **子节点形式** | 数组、单个元素、布尔、null、字符串等混在一起 | **统一展平**为 `child → sibling` 单向链表 |
-| **携带信息** | 仅描述 UI：`type` + `props` + `key` + `ref` | UI 描述 + **状态** + **副作用标记** + **调度上下文** + **DOM 引用** |
-| **与 DOM 关系** | 间接（通过 Fiber 树中转） | 直接（`stateNode` 指向真实 DOM 节点） |
+| 维度           | ReactElement 树                          | Fiber 树                                                 |
+|--------------|-----------------------------------------|---------------------------------------------------------|
+| **本质**       | 普通 JS 对象，由 `jsx()` 创建                   | 类实例（`FiberNode`），由 reconciler 管理                        |
+| **生命周期**     | **每次 render 重建**，不持久                    | **持久存在**，跨 render 复用（通过 `alternate` 双缓冲）                |
+| **可变性**      | **不可变**，创建后不修改                          | **可变**，作为工作台不断修改 `pendingProps`、`flags`、`memoizedState` |
+| **树结构**      | 嵌套树：`type.props.children` 单向引用          | 三重指针链表：`return` / `child` / `sibling`                   |
+| **子节点形式**    | 数组、单个元素、布尔、null、字符串等混在一起                | **统一展平**为 `child → sibling` 单向链表                        |
+| **携带信息**     | 仅描述 UI：`type` + `props` + `key` + `ref` | UI 描述 + **状态** + **副作用标记** + **调度上下文** + **DOM 引用**     |
+| **与 DOM 关系** | 间接（通过 Fiber 树中转）                        | 直接（`stateNode` 指向真实 DOM 节点）                             |
 
 ### 结构对比
 
@@ -366,9 +386,19 @@ flowchart LR
   "type": "div",
   "props": {
     "children": [
-      { "type": "h2", "props": { "children": "Hello" } },
+      {
+        "type": "h2",
+        "props": {
+          "children": "Hello"
+        }
+      },
       false,
-      { "type": "p", "props": { "children": "World" } }
+      {
+        "type": "p",
+        "props": {
+          "children": "World"
+        }
+      }
     ]
   }
 }
@@ -386,7 +416,8 @@ graph LR
     end
 ```
 
-ReactElement 的 `children` 数组（包含 `false`）在 Fiber 层被**展平并过滤**：`false` / `null` / `undefined` / `true` 不会生成 Fiber 节点，数组本身也被拆散为 `child → sibling` 链表。
+ReactElement 的 `children` 数组（包含 `false`）在 Fiber 层被**展平并过滤**：`false` / `null` / `undefined` / `true` 不会生成
+Fiber 节点，数组本身也被拆散为 `child → sibling` 链表。
 
 ### Fiber 的额外能力
 
@@ -407,7 +438,7 @@ Diff 是**逐层局部**的，发生在每次 `beginWork` 调用中。每次只�
 
 ```mermaid
 flowchart TD
-    WIP["WIP Fiber<br/>beginWork(wip)"] -->|"取 pendingProps.children<br/>= 新的 ReactElement"| NEW["新的 children"]
+    WIP["WIP Fiber<br/>beginWork(wip)"] -->|" 取 pendingProps.children<br/>= 新的 ReactElement "| NEW["新的 children"]
     ALT["alternate.child<br/>= 旧 Fiber 链表头"] --> OLD["旧 child 链表"]
     NEW --> RECON["reconcileChildFibers<br/>(returnFiber, oldFiber, newChild)"]
     OLD --> RECON
@@ -423,7 +454,8 @@ flowchart TD
 
 ### 为什么是逐层局部 diff？
 
-React 假设：**跨层级的移动操作极少**（如把 `<div>` 里的子节点移到 `<span>`）。基于此假设，只在同一层级比较，复杂度从 O(n³) 降为 O(n)。
+React 假设：**跨层级的移动操作极少**（如把 `<div>` 里的子节点移到 `<span>`）。基于此假设，只在同一层级比较，复杂度从 O(n³) 降为
+O(n)。
 
 ---
 
@@ -433,7 +465,7 @@ React 假设：**跨层级的移动操作极少**（如把 `<div>` 里的子节�
 
 ```tsx
 <div>
-  {isAdmin && <span className="badge">Admin</span>}
+	{isAdmin && <span className="badge">Admin</span>}
 </div>
 ```
 
@@ -441,7 +473,7 @@ React 假设：**跨层级的移动操作极少**（如把 `<div>` 里的子节�
 
 ```js
 _jsx('div', {
-  children: isAdmin && _jsx('span', { className: 'badge', children: 'Admin' })
+	children: isAdmin && _jsx('span', { className: 'badge', children: 'Admin' })
 })
 ```
 
@@ -457,8 +489,8 @@ flowchart TD
     FALSE --> JSX_FN
     JSX_FN --> RECON["进入 reconcileChildFibers"]
     RECON --> OBJ{"typeof newChild?"}
-    OBJ -->|"object"| ELEM["创建/更新 Fiber"]
-    OBJ -->|"boolean"| NULL["返回 null<br/>旧 Fiber 标记删除"]
+    OBJ -->|" object "| ELEM["创建/更新 Fiber"]
+    OBJ -->|" boolean "| NULL["返回 null<br/>旧 Fiber 标记删除"]
 ```
 
 `jsx` 函数不做任何过滤，`false` 原封不动进入 `props.children`。
@@ -467,29 +499,29 @@ flowchart TD
 
 ```ts
 function reconcileChildFibers(returnFiber, currentFirstChild, newChild) {
-  if (typeof newChild === 'object' && newChild !== null) {
-    // 处理 ReactElement
-  }
-  if (typeof newChild === 'string' || typeof newChild === 'number') {
-    // 处理文本节点
-  }
-  // false/null/undefined/true → 没有命中任何分支
-  // → 返回 null，如果之前有子 Fiber 则标记删除（ChildDeletion）
-  return null;
+	if (typeof newChild === 'object' && newChild !== null) {
+		// 处理 ReactElement
+	}
+	if (typeof newChild === 'string' || typeof newChild === 'number') {
+		// 处理文本节点
+	}
+	// false/null/undefined/true → 没有命中任何分支
+	// → 返回 null，如果之前有子 Fiber 则标记删除（ChildDeletion）
+	return null;
 }
 ```
 
 ### 各种条件渲染的 reconcile 结果
 
-| 源代码 | `children` 值 | reconcile 结果 |
-|--------|--------------|---------------|
-| `{isAdmin && <span/>}` (true) | `ReactElement` | 创建/更新 Fiber |
-| `{isAdmin && <span/>}` (false) | `false` | 返回 null，旧 Fiber 标记删除 |
-| `{isAdmin ? <A/> : <B/>}` | `ReactElement(A)` 或 `ReactElement(B)` | 按 key 匹配 |
-| `{null}` / `{undefined}` / `{true}` | `null` / `undefined` / `true` | 同 false，不会产生 Fiber |
-| `{arr.map(x => <Item/>)}` | `[ReactElement, ...]` 数组 | 按 key 逐一 reconcile |
-| `{0}` | `0`（数字） | 创建 HostText Fiber，渲染为 "0" |
-| `{''}` | `''`（字符串） | 创建 HostText Fiber，渲染为空白 |
+| 源代码                                 | `children` 值                          | reconcile 结果              |
+|-------------------------------------|---------------------------------------|---------------------------|
+| `{isAdmin && <span/>}` (true)       | `ReactElement`                        | 创建/更新 Fiber               |
+| `{isAdmin && <span/>}` (false)      | `false`                               | 返回 null，旧 Fiber 标记删除      |
+| `{isAdmin ? <A/> : <B/>}`           | `ReactElement(A)` 或 `ReactElement(B)` | 按 key 匹配                  |
+| `{null}` / `{undefined}` / `{true}` | `null` / `undefined` / `true`         | 同 false，不会产生 Fiber        |
+| `{arr.map(x => <Item/>)}`           | `[ReactElement, ...]` 数组              | 按 key 逐一 reconcile        |
+| `{0}`                               | `0`（数字）                               | 创建 HostText Fiber，渲染为 "0" |
+| `{''}`                              | `''`（字符串）                             | 创建 HostText Fiber，渲染为空白   |
 
 ---
 
@@ -502,12 +534,12 @@ Babel 编译后的 `_jsx()` 调用写在函数组件体内。这些代码不是"
 ```ts
 // 编译后
 function UserCard({ user, isAdmin }) {
-  return _jsxs('div', {
-    children: [
-      _jsx('h2', { children: user.name }),
-      isAdmin && _jsx('span', { className: 'badge', children: 'Admin' })
-    ]
-  });
+	return _jsxs('div', {
+		children: [
+			_jsx('h2', { children: user.name }),
+			isAdmin && _jsx('span', { className: 'badge', children: 'Admin' })
+		]
+	});
 }
 ```
 
@@ -517,16 +549,16 @@ function UserCard({ user, isAdmin }) {
 
 ```ts
 function updateFunctionComponent(wip: FiberNode) {
-  const Component = wip.type;           // Component = UserCard（函数引用）
-  const nextProps = wip.pendingProps;   // 从 Fiber 上取 props
+	const Component = wip.type;           // Component = UserCard（函数引用）
+	const nextProps = wip.pendingProps;   // 从 Fiber 上取 props
 
-  // ★ 就是这行：React 调用你的函数组件！
-  const nextChildren = Component(nextProps);
-  //          ↑
-  //     执行后得到 ReactElement 树
+	// ★ 就是这行：React 调用你的函数组件！
+	const nextChildren = Component(nextProps);
+	//          ↑
+	//     执行后得到 ReactElement 树
 
-  reconcilerChildren(wip, nextChildren);
-  return wip.child;
+	reconcilerChildren(wip, nextChildren);
+	return wip.child;
 }
 ```
 
@@ -534,13 +566,13 @@ function updateFunctionComponent(wip: FiberNode) {
 
 一路追溯上去：
 
-| 阶段 | 来源 |
-|------|------|
-| `updateFunctionComponent` 读 `wip.pendingProps` | 来自 `createWorkInProgress` 从 `current.pendingProps` 复制 |
-| `createFiberFromElement` | 从 ReactElement 的 `props` 复制：`new FiberNode(tag, props, key)` |
-| ReactElement 的 `props` | 由 `jsx()` 函数从 `config` 构建 |
-| 用户代码 | `_jsx(UserCard, { user: ..., isAdmin: ... })` 中的第二参数 |
-| **最终来源** | **用户在 JSX 中写的属性**：`<UserCard user={...} isAdmin={true} />` |
+| 阶段                                             | 来源                                                           |
+|------------------------------------------------|--------------------------------------------------------------|
+| `updateFunctionComponent` 读 `wip.pendingProps` | 来自 `createWorkInProgress` 从 `current.pendingProps` 复制        |
+| `createFiberFromElement`                       | 从 ReactElement 的 `props` 复制：`new FiberNode(tag, props, key)` |
+| ReactElement 的 `props`                         | 由 `jsx()` 函数从 `config` 构建                                    |
+| 用户代码                                           | `_jsx(UserCard, { user: ..., isAdmin: ... })` 中的第二参数         |
+| **最终来源**                                       | **用户在 JSX 中写的属性**：`<UserCard user={...} isAdmin={true} />`   |
 
 ### 执行时的变量填充
 
@@ -552,21 +584,20 @@ sequenceDiagram
     participant Comp as UserCard({user, isAdmin})
     participant JSX as _jsx / _jsxs
     participant RC as reconcilerChildren
-
-    WorkLoop->>BW: performUnitOfWork
-    BW->>UFC: updateFunctionComponent(wip)
-    UFC->>UFC: Component = wip.type<br/>nextProps = wip.pendingProps
-    UFC->>Comp: Component(nextProps)
+    WorkLoop ->> BW: performUnitOfWork
+    BW ->> UFC: updateFunctionComponent(wip)
+    UFC ->> UFC: Component = wip.type<br/>nextProps = wip.pendingProps
+    UFC ->> Comp: Component(nextProps)
     Note over Comp: 解构 { user, isAdmin }
-    Comp->>JSX: _jsx('h2', {children: user.name})
+    Comp ->> JSX: _jsx('h2', {children: user.name})
     Note over JSX: user.name → '张三'<br/>(从参数取值)
-    Comp->>Comp: isAdmin && _jsx('span',...)
+    Comp ->> Comp: isAdmin && _jsx('span',...)
     Note over Comp: isAdmin → true<br/>(从参数取值)
-    Comp->>JSX: _jsxs('div', {...})
-    JSX-->>Comp: 返回 ReactElement 树
-    Comp-->>UFC: 返回 ReactElement 树
-    UFC->>RC: reconcilerChildren(wip, children)
-    RC-->>BW: 返回 wip.child
+    Comp ->> JSX: _jsxs('div', {...})
+    JSX -->> Comp: 返回 ReactElement 树
+    Comp -->> UFC: 返回 ReactElement 树
+    UFC ->> RC: reconcilerChildren(wip, children)
+    RC -->> BW: 返回 wip.child
 ```
 
 ---
@@ -576,6 +607,7 @@ sequenceDiagram
 ### 核心问题
 
 两个精确问题：
+
 - **① 什么时候从 Hook 链读值？**
 - **② 什么时候往 Hook 链写值？**
 
@@ -584,9 +616,9 @@ sequenceDiagram
 ```ts
 // 每个 Hook 节点
 const hook = {
-  memoizedState: null,      // ← state 的当前值
-  queue: { pending: null }, // ← setState 入队的更新
-  next: null,               // ← 指向下一个 Hook
+	memoizedState: null,      // ← state 的当前值
+	queue: { pending: null }, // ← setState 入队的更新
+	next: null,               // ← 指向下一个 Hook
 };
 ```
 
@@ -605,18 +637,18 @@ Fiber 的 `memoizedState` 存的是**Hook 链表的头指针**，不是单个值
 
 ```ts
 function mountState(initialState) {
-  // ─── [写] ① 创建 Hook 节点，写入 fiber ───
-  const hook = {
-    memoizedState: initialState,   // 0
-    queue: { pending: null },
-    next: null,
-  };
-  currentlyRenderingFiber.memoizedState = hook;  // 链到 fiber
+	// ─── [写] ① 创建 Hook 节点，写入 fiber ───
+	const hook = {
+		memoizedState: initialState,   // 0
+		queue: { pending: null },
+		next: null,
+	};
+	currentlyRenderingFiber.memoizedState = hook;  // 链到 fiber
 
-  // ─── [读] ② 返回 memoizedState ───
-  return [hook.memoizedState, dispatch];
-  //       ↑
-  //       count = 0
+	// ─── [读] ② 返回 memoizedState ───
+	return [hook.memoizedState, dispatch];
+	//       ↑
+	//       count = 0
 }
 ```
 
@@ -626,12 +658,12 @@ function mountState(initialState) {
 
 ```ts
 function dispatchAction(fiber, queue, action) {
-  // 把 action 入队到 hook.queue.pending
-  const update = { action, next: null };
-  queue.pending = update;
-  // hook.memoizedState ← 不改！
-  
-  scheduleUpdateOnFiber(fiber);
+	// 把 action 入队到 hook.queue.pending
+	const update = { action, next: null };
+	queue.pending = update;
+	// hook.memoizedState ← 不改！
+
+	scheduleUpdateOnFiber(fiber);
 }
 ```
 
@@ -639,32 +671,32 @@ function dispatchAction(fiber, queue, action) {
 
 ```ts
 function updateReducer(reducer) {
-  // ─── [读] ① 从 alternate 的 hook 链拿到旧 hook ───
-  const hook = updateWorkInProgressHook();
-  // 此时：
-  //   hook.memoizedState = 0     （旧值）
-  //   hook.queue.pending = Update { action: 1 }
+	// ─── [读] ① 从 alternate 的 hook 链拿到旧 hook ───
+	const hook = updateWorkInProgressHook();
+	// 此时：
+	//   hook.memoizedState = 0     （旧值）
+	//   hook.queue.pending = Update { action: 1 }
 
-  // ─── [写] ② 消费 pending，把新值写回 hook.memoizedState ───
-  let newState = hook.memoizedState;            // 从旧值 0 开始
-  newState = hook.queue.pending.action;         // 1
-  hook.memoizedState = newState;                // ← 写回 hook！
-  hook.queue.pending = null;
+	// ─── [写] ② 消费 pending，把新值写回 hook.memoizedState ───
+	let newState = hook.memoizedState;            // 从旧值 0 开始
+	newState = hook.queue.pending.action;         // 1
+	hook.memoizedState = newState;                // ← 写回 hook！
+	hook.queue.pending = null;
 
-  // ─── [读] ③ 返回新值 ───
-  return [hook.memoizedState, hook.queue.dispatch];
-  //       ↑
-  //       count = 1
+	// ─── [读] ③ 返回新值 ───
+	return [hook.memoizedState, hook.queue.dispatch];
+	//       ↑
+	//       count = 1
 }
 ```
 
 ### 精确答案一览
 
-| | 什么时候读 Hook 链？ | 什么时候写 Hook 链？ |
-|---|---|---|
-| **首次渲染** | `useState(0)` → `mountState` → 返回前从 `hook.memoizedState` 读 | `useState(0)` → `mountState` → 一开始创建 hook 并链到 fiber |
-| **更新渲染** | `useState(0)` → `updateReducer` → **第一步** `updateWorkInProgressHook()` 从 alternate 读旧 hook | `useState(0)` → `updateReducer` → **第二步** 消费 `queue.pending` 后写回 `hook.memoizedState` |
-| **`setCount()` 调用时** | 不读 hook 链 | 只把 action 入队到 `hook.queue.pending`，**不改** `memoizedState` |
+|                      | 什么时候读 Hook 链？                                                                              | 什么时候写 Hook 链？                                                                         |
+|----------------------|--------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| **首次渲染**             | `useState(0)` → `mountState` → 返回前从 `hook.memoizedState` 读                                 | `useState(0)` → `mountState` → 一开始创建 hook 并链到 fiber                                   |
+| **更新渲染**             | `useState(0)` → `updateReducer` → **第一步** `updateWorkInProgressHook()` 从 alternate 读旧 hook | `useState(0)` → `updateReducer` → **第二步** 消费 `queue.pending` 后写回 `hook.memoizedState` |
+| **`setCount()` 调用时** | 不读 hook 链                                                                                  | 只把 action 入队到 `hook.queue.pending`，**不改** `memoizedState`                             |
 
 ### 完整时间线
 
@@ -675,25 +707,22 @@ sequenceDiagram
     participant Hook as Hook 链表
     participant Fiber as Fiber.memoizedState
     participant JSX as _jsx('p', {children})
-
-    Note over Counter,JSX: 【首次渲染】
-    Counter->>useState: 调用 useState(0)
-    useState->>Fiber: [写] 创建 hook，链到 fiber
-    useState->>Hook: [写] hook.memoizedState = 0
-    Hook-->>Counter: [读] return [0, setCount]
-    Counter->>JSX: _jsx('p', {children: count})
+    Note over Counter, JSX: 【首次渲染】
+    Counter ->> useState: 调用 useState(0)
+    useState ->> Fiber: [写] 创建 hook，链到 fiber
+    useState ->> Hook: [写] hook.memoizedState = 0
+    Hook -->> Counter: [读] return [0, setCount]
+    Counter ->> JSX: _jsx('p', {children: count})
     Note over JSX: 0 嵌入 ReactElement
-
-    Note over Counter,JSX: 【setCount(1) 被调用】
+    Note over Counter, JSX: 【setCount(1) 被调用】
     Note over Hook: [写] 只入队 queue.pending<br/>不改 memoizedState
-
-    Note over Counter,JSX: 【重新渲染】
-    Counter->>useState: 调用 useState(0)
-    useState->>Fiber: [读] updateWorkInProgressHook()
-    Fiber-->>useState: 拿到旧 hook<br/>memoizedState=0, pending=1
-    useState->>Hook: [写] 消费 pending<br/>hook.memoizedState = 1
-    Hook-->>Counter: [读] return [1, setCount]
-    Counter->>JSX: _jsx('p', {children: count})
+    Note over Counter, JSX: 【重新渲染】
+    Counter ->> useState: 调用 useState(0)
+    useState ->> Fiber: [读] updateWorkInProgressHook()
+    Fiber -->> useState: 拿到旧 hook<br/>memoizedState=0, pending=1
+    useState ->> Hook: [写] 消费 pending<br/>hook.memoizedState = 1
+    Hook -->> Counter: [读] return [1, setCount]
+    Counter ->> JSX: _jsx('p', {children: count})
     Note over JSX: 1 嵌入 ReactElement
 ```
 
@@ -711,8 +740,9 @@ graph LR
         WH0["Hook0(count)<br/>memoizedState: 1"] --> WH1["Hook1(name)<br/>memoizedState: 'Bob'"]
         WH1 --> WHN["null"]
     end
-    CH0 -.->|"updateWorkInProgressHook<br/>第 1 次取值"| WH0
-    CH1 -.->|"updateWorkInProgressHook<br/>第 2 次取值"| WH1
+    CH0 -.->|" updateWorkInProgressHook<br/>第 1 次取值 "| WH0
+    CH1 -.->|" updateWorkInProgressHook<br/>第 2 次取值 "| WH1
 ```
 
-如果顺序变了，`useState` 的第二次调用会错误地匹配到前一次的第一个 Hook，导致状态混乱。这就是 React 报错 `Rendered fewer hooks than expected` 的原因。
+如果顺序变了，`useState` 的第二次调用会错误地匹配到前一次的第一个 Hook，导致状态混乱。这就是 React 报错
+`Rendered fewer hooks than expected` 的原因。

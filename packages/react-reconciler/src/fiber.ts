@@ -8,18 +8,43 @@ export class FiberNode {
 	tag: WorkTag;
 	pendingProps: Props;
 	key: Key;
+
+	/**
+	 * HostComponent类型的由真实dom节点的ReactElement转化而来，指向真实的dom节点
+	 *
+	 * FunctionComponent类型的由函数组件的ReactElement转化而来，指向null
+	 *
+	 * HostRoot类型的由我们自己在调用createContainer时生成，指向FiberRootNode节点
+	 */
 	stateNode: any;
 	// ref: Ref;
-
+	/**
+	 * 指向父级FiberNode,通过它可以一级级的找到管理员，然后从管理员处开始更新
+	 */
 	return: FiberNode | null;
+	/**
+	 * 找到临近的兄弟FiberNode节点，一般是为了遍历
+	 */
 	sibling: FiberNode | null;
+	/**
+	 * 指向子FiberNode节点。一般是更新时一级一级往下更新
+	 */
 	child: FiberNode | null;
 	index: number;
 	memoizedProps: Props | null;
+	/**
+	 * HostRoot类型的memoizedState 是一个 ReactElement
+	 * 其余
+	 */
 	memoizedState: any;
 	updateQueue: unknown;
-	// memoizedState: any;
+	/**
+	 * 指向备用fiberNode，两者互为备用，第一次挂载时为null
+	 */
 	alternate: FiberNode | null;
+	/**
+	 * 标记副作用
+	 */
 	flags: Flags;
 	// subtreeFlags: Flags;
 
@@ -53,7 +78,7 @@ export class FiberNode {
 		this.flags = NoFlags;
 	}
 }
-
+// Container 一般是dom节点，但是react可能不在web中渲染，所以不一定，类型才没有使用DOM
 export class FiberRootNode {
 	container: Container;
 	current: FiberNode;
@@ -74,7 +99,9 @@ export const createWorkInProgress = (
 ): FiberNode => {
 	let wip = current.alternate;
 	if (wip === null) {
+		// 首屏渲染，alternate为空
 		wip = new FiberNode(current.tag, pendingProps, current.key);
+		// 这时两者的stateNode都指向同一个对象了
 		wip.stateNode = current.stateNode;
 		// 两棵树互相指向对方
 		wip.alternate = current;
@@ -82,7 +109,7 @@ export const createWorkInProgress = (
 	} else {
 		// 更新的操作
 		wip.pendingProps = pendingProps;
-		// 重置副作用标记
+		// 重置副作用标记 清空上一轮工作循环积累的副作用标记，防止残留标记污染新一轮的 commit 判断。
 		wip.flags = NoFlags;
 	}
 	wip.type = current.type;

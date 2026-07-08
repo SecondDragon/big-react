@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JavaScript Symbol 快速参考</title>
+<style>
+  @page { size: A4; margin: 1.5cm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Segoe UI', 'Noto Sans SC', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #1a1a2e;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: #fafafa;
+  }
+  @media print {
+    body { padding: 0; background: white; }
+    .page-break { page-break-before: always; }
+  }
+  h1 {
+    font-size: 2rem;
+    border-bottom: 3px solid #e94560;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+    color: #1a1a2e;
+  }
+  h2 {
+    font-size: 1.4rem;
+    margin-top: 2rem;
+    margin-bottom: 0.8rem;
+    padding-left: 0.5rem;
+    border-left: 4px solid #e94560;
+    color: #16213e;
+  }
+  h3 {
+    font-size: 1.1rem;
+    margin-top: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: #0f3460;
+  }
+  p { margin-bottom: 0.8rem; }
+  code {
+    background: #ffe8e8;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+    font-family: 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+  }
+  pre {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    font-family: 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+    margin: 1rem 0;
+  }
+  pre .comment { color: #6a9955; }
+  pre .keyword { color: #569cd6; }
+  pre .string { color: #ce9178; }
+  pre .func { color: #dcdcaa; }
+  pre .number { color: #b5cea8; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  th {
+    background: #16213e;
+    color: white;
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #ddd;
+  }
+  tr:nth-child(even) { background: #f5f5f5; }
+  .card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .tag {
+    display: inline-block;
+    background: #e94560;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .icon-item {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .icon-item .big-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  .summary-box {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 4px;
+  }
+  .warning-box {
+    background: #f8d7da;
+    border-left: 4px solid #dc3545;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 4px;
+  }
+  .tip-box {
+    background: #d4edda;
+    border-left: 4px solid #28a745;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+
+<h1>🔷 JavaScript Symbol 快速参考</h1>
+<p style="color:#666; margin-bottom:1.5rem;">ES6 第7种原始类型 — 唯一标识符 · 跨模块共享 · 非枚举属性</p>
+
+<!-- ==================== 速查表 ==================== -->
+<div class="card">
+  <h2>📋 三种创建方式速查</h2>
+  <table>
+    <tr><th>方式</th><th>语法</th><th>唯一性</th><th>典型用途</th></tr>
+    <tr>
+      <td>匿名</td>
+      <td><code>Symbol()</code></td>
+      <td>每次调用不同</td>
+      <td>内部临时标识</td>
+    </tr>
+    <tr>
+      <td>带描述</td>
+      <td><code>Symbol('desc')</code></td>
+      <td>每次调用不同（描述仅用于调试）</td>
+      <td>调试友好的唯一标识</td>
+    </tr>
+    <tr>
+      <td><strong>全局注册表</strong></td>
+      <td><code>Symbol.for('key')</code></td>
+      <td><strong>同 key 必同值</strong></td>
+      <td>跨模块共享常量（✅ React 的选择）</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ==================== 核心特性 ==================== -->
+<h2>🔑 核心特性</h2>
+
+<div class="icon-grid">
+  <div class="icon-item">
+    <div class="big-icon">🆔</div>
+    <strong>绝对唯一</strong>
+    <p style="font-size:0.8rem;color:#666;">Symbol() !== Symbol()</p>
+  </div>
+  <div class="icon-item">
+    <div class="big-icon">🔒</div>
+    <strong>不可隐式转换</strong>
+    <p style="font-size:0.8rem;color:#666;">'' + Symbol() → TypeError</p>
+  </div>
+  <div class="icon-item">
+    <div class="big-icon">🙈</div>
+    <strong>非枚举</strong>
+    <p style="font-size:0.8rem;color:#666;">for...in 不可见</p>
+  </div>
+  <div class="icon-item">
+    <div class="big-icon">📦</div>
+    <strong>JSON 免疫</strong>
+    <p style="font-size:0.8rem;color:#666;">JSON.parse 无法产生</p>
+  </div>
+  <div class="icon-item">
+    <div class="big-icon">🌐</div>
+    <strong>全局共享</strong>
+    <p style="font-size:0.8rem;color:#666;">Symbol.for() 跨模块</p>
+  </div>
+  <div class="icon-item">
+    <div class="big-icon">🔍</div>
+    <strong>可检索键</strong>
+    <p style="font-size:0.8rem;color:#666;">getOwnPropertySymbols()</p>
+  </div>
+</div>
+
+<!-- ==================== API 速查 ==================== -->
+<h2>⚡ API 参考</h2>
+
+<table>
+  <tr><th>API</th><th>返回</th><th>说明</th></tr>
+  <tr>
+    <td><code>Symbol(description?)</code></td>
+    <td>symbol</td>
+    <td>创建唯一 Symbol</td>
+  </tr>
+  <tr>
+    <td><code>Symbol.for(key)</code></td>
+    <td>symbol</td>
+    <td>从全局注册表获取/创建</td>
+  </tr>
+  <tr>
+    <td><code>Symbol.keyFor(sym)</code></td>
+    <td>string | undefined</td>
+    <td>反查全局 Symbol 的 key</td>
+  </tr>
+  <tr>
+    <td><code>sym.description</code></td>
+    <td>string | undefined</td>
+    <td>ES2019：获取描述字符串</td>
+  </tr>
+  <tr>
+    <td><code>typeof</code></td>
+    <td>'symbol'</td>
+    <td>类型检查字符串</td>
+  </tr>
+</table>
+
+<!-- ==================== 内置 Well-Known Symbols ==================== -->
+<h2>🏛️ Well-Known Symbols（内置 Symbol）</h2>
+
+<table>
+  <tr><th>Symbol</th><th>用途</th></tr>
+  <tr><td><code>Symbol.iterator</code></td><td>定义对象的默认迭代器（for...of）</td></tr>
+  <tr><td><code>Symbol.asyncIterator</code></td><td>定义异步迭代器（for await...of）</td></tr>
+  <tr><td><code>Symbol.toStringTag</code></td><td><code>Object.prototype.toString</code> 返回的标签</td></tr>
+  <tr><td><code>Symbol.hasInstance</code></td><td>自定义 instanceof 行为</td></tr>
+  <tr><td><code>Symbol.species</code></td><td>控制衍生对象的构造函数</td></tr>
+  <tr><td><code>Symbol.match</code></td><td>控制 String.prototype.match 的行为</td></tr>
+  <tr><td><code>Symbol.toPrimitive</code></td><td>控制对象到原始值的转换</td></tr>
+  <tr><td><code>Symbol.isConcatSpreadable</code></td><td>控制 Array.prototype.concat 是否展开</td></tr>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ==================== React 实际代码 ==================== -->
+<h2>⚛️ ReactSymbols.ts 实战</h2>
+
+<pre>
+<span class="comment">// 能力检测 — 前置条件</span>
+<span class="keyword">const</span> supportSymbol = <span class="keyword">typeof</span> Symbol === <span class="string">'function'</span> && Symbol.for;
+
+<span class="comment">// 所有内部类型：Symbol✨ + 魔数📉 双模式</span>
+<span class="keyword">export const</span> <span class="func">REACT_ELEMENT_TYPE</span> = supportSymbol
+    ? Symbol.for(<span class="string">'react.element'</span>)
+    : <span class="number">0xeac7</span>;
+
+<span class="keyword">export const</span> <span class="func">REACT_FRAGMENT_TYPE</span> = supportSymbol
+    ? Symbol.for(<span class="string">'react.fragment'</span>)
+    : <span class="number">0xeaca</span>;
+</pre>
+
+<div class="tip-box">
+  <strong>💡 核心设计原则</strong>：
+  <code>Symbol.for('react.element')</code> 保证跨包唯一，<code>0xeac7</code> 是降级方案。
+  这种双模式 = <strong>渐进增强</strong>（优先现代特性，退路给老旧环境）。
+</div>
+
+<!-- ==================== 常见陷阱 ==================== -->
+<h2>⚠️ 常见误区</h2>
+
+<div class="warning-box">
+  <strong>❌ 误区 1：认为 Symbol 是私有属性</strong><br>
+  Symbol 键不会被 for...in 遍历，但可以通过 <code>Object.getOwnPropertySymbols()</code> 获取到。<br>
+  真正的私有机制请用 <code>#privateField</code>（ES2022 class fields）。
+</div>
+
+<div class="warning-box">
+  <strong>❌ 误区 2：Symbol() 跨模块一样</strong><br>
+  <code>Symbol('react.element')</code> 在模块 A 和模块 B 中是两个不同的值。<br>
+  ✅ 用 <code>Symbol.for('react.element')</code> 才能跨模块共享。
+</div>
+
+<div class="warning-box">
+  <strong>❌ 误区 3：Symbol 不能做对象键</strong><br>
+  恰恰相反，<code>obj[sym] = value</code> 是 Symbol 最重要的用途之一。
+</div>
+
+<div class="summary-box">
+  <strong>📌 记住</strong>：Symbol 不是加密工具，不是私有字段，而是一个 <strong>「绝不重复的 ID 生成器」</strong>。
+</div>
+
+<!-- ==================== 心智模型 ==================== -->
+<h2>🧠 心智模型</h2>
+
+<p><strong>把 Symbol 想象成「防伪标签」🔏：</strong></p>
+
+<ul>
+  <li><code>Symbol()</code> = 每次从机器里吐出一张全新的防伪码，世界上不会有第二张一样的</li>
+  <li><code>Symbol('desc')</code> = 带批注的防伪码（批注不影响唯一性）</li>
+  <li><code>Symbol.for('key')</code> = 在公安部备案的防伪码，全国（全局）统一可查</li>
+  <li>用在对象键上 = 给你的对象贴上一个<strong>不能被意外覆盖</strong>的属性</li>
+  <li>React 用它 = 在每棵虚拟 DOM 节点上贴不可伪造的「类型标签」</li>
+</ul>
+
+<div class="tip-box">
+  <strong>推荐阅读</strong>：<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol">MDN: Symbol</a> — 完整 API 参考
+</div>
+
+<p style="margin-top:2rem; text-align:center; color:#999; font-size:0.8rem;">
+  Reference Document · JavaScript Symbol · 项目：big-react
+</p>
+
+</body>
+</html>
