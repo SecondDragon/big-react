@@ -22,6 +22,9 @@ export function createContainer(container: Container) {
 }
 
 /**
+ *
+ *
+ * 这里的element 就是reactD0m.createRoot(root).render(<App/>) 里的 <App/> 对应的ReactElement
  * 更新容器
  * @param element 传入 ReactElementType 实际是一个 ReactElement
  * @param root

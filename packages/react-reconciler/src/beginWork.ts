@@ -4,11 +4,16 @@
  *  是递归中的递的操作
  */
 import { FiberNode } from './fiber';
-import { HostRoot, HostComponent, HostText } from './workTags';
+import {
+	HostRoot,
+	HostComponent,
+	HostText,
+	FunctionComponent
+} from './workTags';
 import { processUpdateQueue, UpdateQueue } from './updateQueue';
 import { ReactElementType } from 'shared/ReactTypes';
 import { mountChildFibers, reconcilerChildFibers } from './childFibers';
-import { __DEV__ } from './reconciler';
+import { renderWithHooks } from './fiberHooks';
 
 // 返回当前fiber节点的子节点
 export const beginWork = (wip: FiberNode) => {
@@ -19,27 +24,43 @@ export const beginWork = (wip: FiberNode) => {
 		case HostComponent:
 			return updateHostComponent(wip);
 		case HostText:
+			// HostText是文本，没有子节点了
 			return null;
+		case FunctionComponent:
+			return updateFunctionComponent(wip);
 		default:
 			if (__DEV__) {
 				console.warn('beginWork 未实现的类型 ', wip.tag);
 			}
 			break;
 	}
-	return wip.child;
+	// return wip.child;
+	return null;
 };
+
+function updateFunctionComponent(wip: FiberNode) {
+	const nextChildren = renderWithHooks(wip);
+	reconcilerChildren(wip, nextChildren);
+	return wip.child;
+}
+
+/**
+ * 本质上我们要对比的是子节点的current 和
+ * @param wip
+ * @param children
+ */
 
 function reconcilerChildren(wip: FiberNode, children?: ReactElementType) {
 	// createWorkInProgress 中写明了 wip.alternate 是 current,current就是已经渲染的fiberNode
-	// 拿current 和现有的children 对比，修改 wip
+	// 拿current 和现有的 children 对比，修改 wip
 	const current = wip.alternate;
-	if (current === null) {
+	if (current !== null) {
 		// 	是update的流程
 
-		wip.child = reconcilerChildFibers(wip, current, children);
+		wip.child = reconcilerChildFibers(wip, current.child, children);
 	} else {
 		// current 为null，是mount的流程
-		wip.child = mountChildFibers(wip, current.child, children);
+		wip.child = mountChildFibers(wip, null, children);
 	}
 	// mount 时存在大量的插入，如果每个都进行标记，就会浪费性能，完全可以先离屏创建，之后再一次挂载
 	// @ts-ignore
@@ -47,12 +68,13 @@ function reconcilerChildren(wip: FiberNode, children?: ReactElementType) {
 }
 
 function updateHostRoot(wip: FiberNode) {
-	const baseState = wip.memoizedState;
-	const updateQueue = wip.updateQueue as UpdateQueue<Element>;
+	const baseState = wip.memoizedState; // HostRoot的memoizedState最初肯定是null
+	const updateQueue = wip.updateQueue as UpdateQueue<Element>; // 这里的UpdateQueue<Element>是创建时拿到的
 	const pending = updateQueue.shared.pending;
 
-	// 计算完成后 重置pending
+	// 计算完成后 重置pending，这里写的有点靠前了
 	updateQueue.shared.pending = null;
+	// pending里有ReactElement
 	const { memoizedState } = processUpdateQueue(baseState, pending);
 	// 更新memoizedState
 	wip.memoizedState = memoizedState;
@@ -65,8 +87,16 @@ function updateHostRoot(wip: FiberNode) {
 	return wip.child;
 }
 
+/**
+ * HostComponent 都是原始dom对应的，无法触发更新，不用算state
+ * HostComponent就是拿到当前的wip 的 pendingProps 中的children作为element，
+ * 然后将这个element和子fiber进行对比，然后确定操作。
+ * @param wip
+ */
 function updateHostComponent(wip: FiberNode) {
 	const nextProps = wip.pendingProps;
+	// 针对非函数ReactElement节点，也就是正常原始dom对应的ReactElement节点，pendingProps中就是他的children
 	const nextChildren = nextProps.children;
 	reconcilerChildren(wip, nextChildren);
+	return wip.child;
 }

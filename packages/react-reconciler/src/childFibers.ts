@@ -3,8 +3,13 @@ import { ReactElementType } from 'shared/ReactTypes';
 import { REACT_ELEMENT_TYPE } from 'shared/ReactSymbols';
 import { HostText } from './workTags';
 import { Placement } from './fiberFlags';
-import { __DEV__ } from './reconciler';
 
+/**
+ * 如果是mountChildFibers，就不必每个fiberNode都标识副作用，
+ * 而是直接构建离屏的dom树，之后commit时只要把父 使用 placement 等操作放进dom就可以
+ * @param shouldTrackSideEffects
+ * @constructor
+ */
 function ChildReconciler(shouldTrackSideEffects: boolean) {
 	function reconcileSingleElement(
 		returnFiber: FiberNode,
@@ -25,7 +30,8 @@ function ChildReconciler(shouldTrackSideEffects: boolean) {
 		return fiber;
 	}
 	function placeSingleChild(fiber: FiberNode) {
-		// 首屏渲染时，直接挂载即可
+		// 这里的意思是只有被标记为允许标记且不是首屏渲染时才允许标记
+		// 首屏渲染时，直接挂载即可，别忘了还有根，针对mount，有根部保证会挂载
 		if (shouldTrackSideEffects && fiber.alternate === null) {
 			// 挂载时，直接挂载即可
 			fiber.flags |= Placement;
@@ -41,7 +47,9 @@ function ChildReconciler(shouldTrackSideEffects: boolean) {
 		if (typeof newChild === 'object' && newChild !== null) {
 			switch (newChild.$$typeof) {
 				case REACT_ELEMENT_TYPE:
-					return reconcileSingleElement(returnFiber, currentFiber, newChild);
+					return placeSingleChild(
+						reconcileSingleElement(returnFiber, currentFiber, newChild)
+					);
 				default:
 					if (__DEV__) {
 						console.warn('未实现的reconcile类型 ', newChild);
@@ -49,8 +57,12 @@ function ChildReconciler(shouldTrackSideEffects: boolean) {
 					break;
 			}
 		}
+		// 我们暂时没处理多子节点的情况
+		// TODO 多节点的情况 ul> li*3
 		if (typeof newChild === 'string' || typeof newChild === 'number') {
-			return reconcileSingleTextNode(returnFiber, currentFiber, newChild);
+			return placeSingleChild(
+				reconcileSingleTextNode(returnFiber, currentFiber, newChild)
+			);
 		}
 		if (__DEV__) {
 			console.warn('未实现的reconcile类型 ', newChild);

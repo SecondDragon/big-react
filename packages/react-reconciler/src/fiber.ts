@@ -2,9 +2,8 @@ import { Key, Props, ReactElementType, Ref } from 'shared/ReactTypes';
 import { FunctionComponent, HostComponent, WorkTag } from './workTags';
 import { Flags, NoFlags } from './fiberFlags';
 import { Container } from 'hostConfig';
-import { __DEV__ } from './reconciler';
 export class FiberNode {
-	type: any;
+	type: any; //
 	tag: WorkTag;
 	pendingProps: Props;
 	key: Key;
@@ -33,7 +32,7 @@ export class FiberNode {
 	index: number;
 	memoizedProps: Props | null;
 	/**
-	 * HostRoot类型的memoizedState 是一个 ReactElement
+	 * HostRoot类型的 memoizedState 是一个 ReactElement
 	 * 其余
 	 */
 	memoizedState: any;
@@ -46,7 +45,7 @@ export class FiberNode {
 	 * 标记副作用
 	 */
 	flags: Flags;
-	// subtreeFlags: Flags;
+	subtreeFlags: Flags;
 
 	constructor(tag: WorkTag, pendingProps: Props, key: Key) {
 		this.tag = tag;
@@ -64,7 +63,6 @@ export class FiberNode {
 		this.index = 0; // 子节点的索引
 
 		// 工作单元
-		this.pendingProps = null; // 尚未进行计算的属性（新属性值未进行处理）
 		this.memoizedProps = null; // 已处理的属性（已应用到真实DOM节点上的属性）
 		this.memoizedState = null; // 已处理的状态（已应用到真实DOM节点上的状态）
 		this.updateQueue = null; // 工作单元队列
@@ -76,6 +74,8 @@ export class FiberNode {
 
 		/* this.flags  此fiber的副作用标记。标记该fiber是否有副作用。及副作用的类型，是要进行什么操作*/
 		this.flags = NoFlags;
+		// 子fiber的副作用标记，如果一个fiber节点的子fiber节点有副作用，那么父节点必须知道，一直向上一级一级的冒泡
+		this.subtreeFlags = NoFlags;
 	}
 }
 // Container 一般是dom节点，但是react可能不在web中渲染，所以不一定，类型才没有使用DOM
@@ -125,9 +125,13 @@ export function createFiberFromElement(element: ReactElementType) {
 	let fiberTag: WorkTag = FunctionComponent;
 	if (typeof type === 'string') {
 		fiberTag = HostComponent;
-	} else if (typeof type === 'function' && __DEV__) {
+	} else if (typeof type !== 'function' && __DEV__) {
 		console.warn('未定义的type类型', element);
 	}
 	const fiber = new FiberNode(fiberTag, props, key);
+	fiber.type = type;
+	console.log('createFiberFromElement----element', element);
+	console.log('createFiberFromElement----fiber', fiber);
+
 	return fiber;
 }
