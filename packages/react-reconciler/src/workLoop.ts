@@ -30,7 +30,7 @@ function prepareFreshStack(fiber: FiberRootNode) {
  */
 export function scheduleUpdateOnFiber(fiber: FiberNode) {
 	//  TODO: 实现调度逻辑
-	// 尝试去找到FiberRootNode，哪个调度管理器
+	// 尝试去找到FiberRootNode调度管理器
 	const root = markUpdateFromFiberToRoot(fiber);
 	renderRoot(root as FiberRootNode);
 }

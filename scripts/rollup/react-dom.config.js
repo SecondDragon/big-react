@@ -1,4 +1,4 @@
-import { getPackageJSON, resolvePkgPath, getBaseRollupPlugins } from './utils';
+import { getBaseRollupPlugins, getPackageJSON, resolvePkgPath } from './utils';
 import generatePackageJson from 'rollup-plugin-generate-package-json';
 import alias from '@rollup/plugin-alias';
 
@@ -25,6 +25,7 @@ export default [
 			}
 			// 	这里导出两份的原因是react17和react18的导出的格式不同
 		],
+		// 不打包react这个包之中的代码，因为react 和 react-dom 他们
 		external: [...Object.keys(peerDependencies), 'scheduler'],
 		plugins: [
 			...getBaseRollupPlugins(),
@@ -51,16 +52,17 @@ export default [
 		]
 	},
 	// react-test-utils
-	// {
-	// 	input: `${pkgPath}/test-utils.ts`,
-	// 	output: [
-	// 		{
-	// 			file: `${pkgDistPath}/test-utils.js`,
-	// 			name: 'testUtils',
-	// 			format: 'umd'
-	// 		}
-	// 	],
-	// 	external: ['react-dom', 'react'],
-	// 	plugins: getBaseRollupPlugins()
-	// }
+	{
+		input: `${pkgPath}/test-utils.ts`,
+		output: [
+			{
+				file: `${pkgDistPath}/test-utils.js`,
+				name: 'testUtils',
+				format: 'umd'
+			}
+		],
+		// 指明 react-dom、react都是外部依赖
+		external: ['react-dom', 'react'],
+		plugins: getBaseRollupPlugins()
+	}
 ];

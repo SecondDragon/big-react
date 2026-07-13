@@ -13,6 +13,12 @@ export default defineConfig({
 			preventAssignment: true
 		})
 	],
+	server: {
+		port: 7500,
+		host: '0.0.0.0',
+		strictPort: false, // 端口被占用时自动累加
+		allowedHosts: true // 设为 true 表示允许任何 Host 域名访问
+	},
 	resolve: {
 		alias: [
 			{

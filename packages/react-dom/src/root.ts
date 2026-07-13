@@ -1,6 +1,6 @@
 // ReactD0M.createRoot(root).render(<App/>)
 import { ReactElementType } from 'shared/ReactTypes';
-import { Container } from './hostConfig';
+import { Container } from 'hostConfig';
 import {
 	createContainer,
 	updateContainer
