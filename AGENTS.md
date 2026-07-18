@@ -113,3 +113,125 @@ flowchart LR
 ### 快速判断
 
 问自己：**"文本中的符号会不会让 Mermaid 解析器提前匹配到结束符？"** 如果答案是"会"，就加 `""`。
+
+### sequenceDiagram（时序图）特殊规则
+
+`sequenceDiagram` 的语法与 `flowchart` 完全不同，上述 flowchart 的引号规则**不适用**于时序图。时序图有自己的一套容易出错的点：
+
+#### 规则 1：Note over 文本禁止加引号
+
+`Note over` 后面的文本是**纯文本**，`:` 之后的所有内容就是显示文本。加引号会导致引号本身也成为显示内容的一部分，或者直接解析失败。
+
+❌ `Note over A,B: "Phase 1: 创建骨架"` — 引号会导致解析错误
+✅ `Note over A,B: Phase 1 创建骨架` — 纯文本，不要引号
+
+#### 规则 2：消息文本禁止包含 `()`、`->`、`→`、`<>`、`{}` 等特殊符号
+
+时序图中 `->>` 后面的消息文本虽然可以用引号包裹，但以下符号即使在引号内也会被解析器误读：
+- `(` `)` — 被误认为 participant 语法
+- `->` — 被误认为箭头
+- `<` `>` — 被误认为标签或 participant 别名
+- `{` `}` — 被误认为块语法
+
+❌ `A->>B: "HostRoot: processUpdateQueue -> reconcilerChildFibers -> App fiber(Placement)"`
+❌ `A->>B: "root.render(<App/>)"`
+✅ `A->>B: HostRoot reconcileChildFibers App fiber` — 纯文本，无特殊符号
+✅ `A->>B: root.render App` — 纯文本
+
+#### 规则 3：消息文本可以省略引号
+
+时序图的消息文本**本来就是纯文本**，不需要加引号。加了反而容易出错。
+
+❌ `A->>B: "some text"`
+✅ `A->>B: some text`
+
+#### 规则 4：participant 别名用 `as` 而非引号
+
+❌ `participant "CR" as createRoot` — 不需要给 ID 加引号
+✅ `participant Root as createRoot` — 直接用简单 ID
+
+#### 时序图正确示例
+
+```mermaid
+sequenceDiagram
+    participant A as 组件
+    participant B as Reconciler
+    participant C as DOM
+
+    Note over A,C: Mount 阶段
+    A->>B: render 触发
+    B->>B: beginWork 向下递
+    B->>B: completeWork 向上归
+    B->>C: commitRoot 挂载 DOM
+    C->>A: 页面渲染完成
+```
+
+#### 核心原则
+
+**时序图中每一步，消息文本只用中文 + 英文字母 + 空格，宁可简化文本也不要加任何特殊符号。**
+
+## 注释方法论
+
+项目代码中函数注释遵循以下规范，AI assistant 编写注释时也应遵守。
+
+### 通用原则（所有函数都适用）
+
+1. **职责描述**：函数签名第一段，用一句清晰的话说明函数做什么
+2. **执行流程**：简述函数内部的主要步骤
+3. **具体举例**：用一个**真实的 fiber 树 / ReactElement 结构**作为例子
+4. **逐步骤推演**：顺着例子一步步推导，标注每步的输入输出
+5. **结论**：最终能达到什么效果
+
+### commit 流程（`commitWork.ts`）—— 从 FiberNode 角度解释
+
+commit 阶段操作的是已经构建好的 fiber 树和真实 DOM。注释中给出的例子应包含：
+
+- **fiber 树结构**：节点类型（`tag`）、`stateNode`（对应 DOM）、`child` / `sibling` / `return` 关系
+- **真实 DOM 树**：与 fiber 树对应的 DOM 结构
+- **遍历步骤**：`commitNestedComponent` 的 DFS 顺序
+- **收集/操作过程**：`recordHostChildrenToDelete` 的数组变化过程，或 `insertOrAppendPlacementNodeIntoContainer` 的递归调用过程
+
+示例片段（`commitDeletion`）：
+
+````
+fiber 树（childToDelete = Fragment）：
+  ul (HostComponent, stateNode = <ul>)
+    └── Fragment (tag=7)  ← childToDelete
+          ├── li#1 (HostComponent, stateNode = <li>1</li>)
+          ├── li#2 (HostComponent, stateNode = <li>2</li>)
+          └── li#3 (HostComponent, stateNode = <li>3</li>)
+
+收集过程：
+  ① Fragment：tag=7 → default → 什么都不做
+  ② li#1：rootChildrenToDelete 为空 → push li#1 → [li#1]
+  ③ li#2：lastOne = li#1，li#1.sibling = li#2 → push → [li#1, li#2]
+  ④ li#3：lastOne = li#2，li#2.sibling = li#3 → push → [li#1, li#2, li#3]
+
+最终删除：
+  removeChild(<li>1</li>, <ul>)
+  removeChild(<li>2</li>, <ul>)
+  removeChild(<li>3</li>, <ul>)
+````
+
+### beginWork 流程（`beginWork.ts` / `childFibers.ts`）—— 从 FiberNode + ReactElement 两个角度解释
+
+beginWork 的核心是"用 ReactElement 对比旧 fiber，生成新 fiber"。注释中给出的例子应同时包含：
+
+- **旧 fiber 树结构**：`current.child`，包含各节点的 `key` / `index` / `type`
+- **新 ReactElement 结构**：来自组件返回值或 jsx 编译产物，包含 `type` / `key` / `props`
+- **对比过程**：`reconcileSingleElement` 的 key 匹配 + type 匹配，或 `reconcileChildrenArray` 的 `oldIndex` / `lastPlacedIndex` 计算
+
+示例片段（`reconcileChildrenArray`）：
+
+````
+旧 fiber 树（current）：
+  key='1'(index=0), key='2'(index=1), key='3'(index=2)
+
+新 children：
+  [li(k='3'), li(k='2'), li(k='1')]
+
+diff 过程：
+  i=0, li(k='3'): oldIndex=2 >= lastPlacedIndex=0 → 不移动, lastPlacedIndex=2
+  i=1, li(k='2'): oldIndex=1 <  lastPlacedIndex=2 → 移动
+  i=2, li(k='1'): oldIndex=0 <  lastPlacedIndex=2 → 移动
+````

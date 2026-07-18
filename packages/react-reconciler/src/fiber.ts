@@ -1,17 +1,31 @@
-import { Key, Props, ReactElementType, Ref } from 'shared/ReactTypes';
-import { FunctionComponent, HostComponent, WorkTag } from './workTags';
+import { Key, Props, ReactElementType } from 'shared/ReactTypes';
+import {
+	Fragment,
+	FunctionComponent,
+	HostComponent,
+	WorkTag
+} from './workTags';
 import { Flags, NoFlags } from './fiberFlags';
 import { Container } from 'hostConfig';
+import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes';
+
 export class FiberNode {
-	type: any; //
+	/**
+	 * 对于 HostComponent，type 是字符串 'div' / 'span' 等
+	 * 对于 FunctionComponent，type 是组件函数本身
+	 */
+	type: any;
 	tag: WorkTag;
+	/**
+	 * 本次更新要应用的 props
+	 */
 	pendingProps: Props;
 	key: Key;
 
 	/**
 	 * HostComponent类型的由真实dom节点的ReactElement转化而来，指向真实的dom节点
 	 *
-	 * FunctionComponent类型的由函数组件的ReactElement转化而来，指向null
+	 * FunctionComponent类型的由函数组件的stateNode 由 ReactElement 转化而来，指向null
 	 *
 	 * HostRoot类型的由我们自己在调用createContainer时生成，指向FiberRootNode节点
 	 */
@@ -32,10 +46,15 @@ export class FiberNode {
 	index: number;
 	memoizedProps: Props | null;
 	/**
-	 * HostRoot类型的 memoizedState 是一个 ReactElement
-	 * 其余
+	 * HostRoot: memoizedState 存储 render 传入的 ReactElement（如 <App/>）
+	 * FunctionComponent: memoizedState 指向 Hooks 链表的头节点
+	 * HostComponent / HostText: 不使用
 	 */
 	memoizedState: any;
+	/**
+	 * HostRoot: 存储 UpdateQueue，消费后得到 memoizedState(ReactElement)
+	 * FunctionComponent: 每个 Hook 有自己的 updateQueue
+	 */
 	updateQueue: unknown;
 	/**
 	 * 指向备用fiberNode，两者互为备用，第一次挂载时为null
@@ -47,10 +66,12 @@ export class FiberNode {
 	flags: Flags;
 	subtreeFlags: Flags;
 
+	deletions: FiberNode[] | null;
+
 	constructor(tag: WorkTag, pendingProps: Props, key: Key) {
 		this.tag = tag;
 		this.pendingProps = pendingProps;
-		this.key = key;
+		this.key = key || null;
 
 		this.stateNode = null; //此fiber对应的真实DOM节点  h1=>真实的h1DOM
 
@@ -76,23 +97,47 @@ export class FiberNode {
 		this.flags = NoFlags;
 		// 子fiber的副作用标记，如果一个fiber节点的子fiber节点有副作用，那么父节点必须知道，一直向上一级一级的冒泡
 		this.subtreeFlags = NoFlags;
+		this.deletions = null;
 	}
 }
 // Container 一般是dom节点，但是react可能不在web中渲染，所以不一定，类型才没有使用DOM
+/**
+ * FiberRootNode 是每棵 fiber 树的"管理器"。
+ * container: 真实 DOM 容器（如 #root）
+ * current: 指向当前已渲染到屏幕上的 HostRoot fiber
+ * finishedWork: render 阶段构建完的新 HostRoot（commit 后赋给 current）
+ */
 export class FiberRootNode {
 	container: Container;
 	current: FiberNode;
 	// 指向更新完成后的fiber树的根节点 也就是 hostRootFiber
 	finishedWork: FiberNode | null;
+	// 未消费的lanes
+	pendingLanes: Lanes;
+	// 本次更新消费的lane
+	finishedLane: Lane;
 
 	constructor(container: Container, hostRootFiber: FiberNode) {
 		this.container = container;
 		this.current = hostRootFiber;
 		hostRootFiber.stateNode = this;
 		this.finishedWork = null;
+		this.pendingLanes = NoLanes;
+		this.finishedLane = NoLane;
 	}
 }
 
+/**
+ * 创建或复用 workInProgress fiber。
+ * 这是双缓冲机制的核心入口。
+ *
+ * 首次 mount：current.alternate 为 null → 新建 fiberNode，建立双向 alternate 链接
+ * 后续 update：已有 alternate → 复用并重置副作用标记，更新 pendingProps
+ *
+ * @param current 当前屏幕上已渲染的 fiber（"旧树"的节点）
+ * @param pendingProps 本次更新要应用的新 props
+ * @returns 可复用的 workInProgress fiber
+ */
 export const createWorkInProgress = (
 	current: FiberNode,
 	pendingProps: Props
@@ -111,6 +156,8 @@ export const createWorkInProgress = (
 		wip.pendingProps = pendingProps;
 		// 重置副作用标记 清空上一轮工作循环积累的副作用标记，防止残留标记污染新一轮的 commit 判断。
 		wip.flags = NoFlags;
+		wip.subtreeFlags = NoFlags;
+		wip.deletions = null;
 	}
 	wip.type = current.type;
 	wip.updateQueue = current.updateQueue;
@@ -120,6 +167,13 @@ export const createWorkInProgress = (
 	return wip;
 };
 
+/**
+ * 从 ReactElement 创建对应的 FiberNode。
+ * 根据 element.type 的类型判断 WorkTag：
+ * - type 是 string → HostComponent（如 'div'）
+ * - type 是 function → FunctionComponent（如 App）
+ * props / key 直接从 element 取值。
+ */
 export function createFiberFromElement(element: ReactElementType) {
 	const { type, key, props } = element;
 	let fiberTag: WorkTag = FunctionComponent;
@@ -130,8 +184,12 @@ export function createFiberFromElement(element: ReactElementType) {
 	}
 	const fiber = new FiberNode(fiberTag, props, key);
 	fiber.type = type;
-	console.log('createFiberFromElement----element', element);
-	console.log('createFiberFromElement----fiber', fiber);
+	console.log('createFiberFromElement----element', element, 'fiber', fiber);
 
+	return fiber;
+}
+
+export function createFiberFromFragment(elements: any[], key: Key): FiberNode {
+	const fiber = new FiberNode(Fragment, elements, key);
 	return fiber;
 }

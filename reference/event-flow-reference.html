@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>事件流速查表 — big-react</title>
+<style>
+  @page { size: A4 landscape; margin: 1.2cm; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Segoe UI', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    font-size: 13px;
+    line-height: 1.65;
+    color: #1a1a2e;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: #fefefe;
+  }
+  @media print { body { padding: 0; background: white; max-width: none; } }
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    border-bottom: 3px solid #e94560;
+    padding-bottom: 0.4rem;
+    margin-bottom: 1.2rem;
+    color: #0b0b1a;
+  }
+  h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 1.6rem 0 0.6rem;
+    color: #0b0b1a;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 0.25rem;
+  }
+  h3 { font-size: 1rem; font-weight: 700; margin: 1rem 0 0.4rem; color: #333; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.6rem 0 1rem;
+    font-size: 0.88rem;
+  }
+  thead { background: #f0f0f3; }
+  th, td {
+    border: 1px solid #d0d0d5;
+    padding: 0.45rem 0.6rem;
+    text-align: left;
+  }
+  th { font-weight: 700; color: #333; }
+  tr:nth-child(even) { background: #fafafa; }
+
+  code {
+    font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+    font-size: 0.9em;
+    background: #f4f4f5;
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    color: #c2324f;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 0.8rem 0; }
+  @media (max-width: 760px) { .two-col { grid-template-columns: 1fr; } }
+
+  .tag { display: inline-block; padding: 0.1em 0.5em; border-radius: 3px; font-size: 0.8rem; font-weight: 700; }
+  .tag-red { background: #fce4ec; color: #c62828; }
+  .tag-green { background: #e8f5e9; color: #2d6a4f; }
+  .tag-blue { background: #e3f2fd; color: #0d47a1; }
+  .tag-orange { background: #fff3e0; color: #e65100; }
+
+  footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+    font-size: 0.8rem;
+    color: #888;
+  }
+  a { color: #e94560; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<h1>📋 事件流速查表</h1>
+
+<!-- ==================== 一、事件流阶段 ==================== -->
+<h2>一、事件流三阶段</h2>
+
+<table>
+  <thead>
+    <tr><th>阶段</th><th>eventPhase</th><th>方向</th><th>addEventListener 参数</th><th>典型用途</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>捕获</strong> (Capture)</td>
+      <td><code>1</code></td>
+      <td>根 → 目标 ↓</td>
+      <td><code>true</code> 或 <code>{ capture: true }</code></td>
+      <td>拦截事件、日志收集</td>
+    </tr>
+    <tr>
+      <td><strong>目标</strong> (Target)</td>
+      <td><code>2</code></td>
+      <td>停驻</td>
+      <td>按注册顺序触发</td>
+      <td>常规点击处理</td>
+    </tr>
+    <tr>
+      <td><strong>冒泡</strong> (Bubble)</td>
+      <td><code>3</code></td>
+      <td>目标 → 根 ↑</td>
+      <td><code>false</code>（默认）</td>
+      <td>事件委托、90%日常开发</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ==================== 二、关键 API ==================== -->
+<h2>二、关键 API 速查</h2>
+
+<div class="two-col">
+  <div>
+    <h3>addEventListener 选项</h3>
+    <table>
+      <thead><tr><th>选项</th><th>类型</th><th>效果</th></tr></thead>
+      <tbody>
+        <tr><td><code>capture</code></td><td><code>boolean</code></td><td>在捕获阶段触发</td></tr>
+        <tr><td><code>once</code></td><td><code>boolean</code></td><td>触发一次后自动移除</td></tr>
+        <tr><td><code>passive</code></td><td><code>boolean</code></td><td>声明不会调用 preventDefault()</td></tr>
+        <tr><td><code>signal</code></td><td><code>AbortSignal</code></td><td>通过 AbortController 移除</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <h3>Event 对象关键属性</h3>
+    <table>
+      <thead><tr><th>属性/方法</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><code>target</code></td><td>触发事件的源元素</td></tr>
+        <tr><td><code>currentTarget</code></td><td>当前监听器绑定的元素</td></tr>
+        <tr><td><code>eventPhase</code></td><td>当前阶段：1/2/3</td></tr>
+        <tr><td><code>stopPropagation()</code></td><td>阻止传播，但同元素后续监听仍执行</td></tr>
+        <tr><td><code>stopImmediatePropagation()</code></td><td>阻止传播 + 阻止同元素后续监听</td></tr>
+        <tr><td><code>preventDefault()</code></td><td>阻止默认行为（如链接跳转）</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== 三、不冒泡的事件 ==================== -->
+<h2>三、常见不冒泡的事件</h2>
+
+<p>以下事件<strong>不会冒泡</strong>，无法用于事件委托，必须在目标元素上直接绑定：</p>
+
+<table>
+  <thead>
+    <tr><th>事件</th><th>说明</th><th>替代方案</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>focus</code></td><td>元素获得焦点</td><td>用 <code>focusin</code>（会冒泡）代替</td></tr>
+    <tr><td><code>blur</code></td><td>元素失去焦点</td><td>用 <code>focusout</code>（会冒泡）代替</td></tr>
+    <tr><td><code>mouseenter</code></td><td>鼠标进入</td><td>用 <code>mouseover</code>（会冒泡）代替</td></tr>
+    <tr><td><code>mouseleave</code></td><td>鼠标离开</td><td>用 <code>mouseout</code>（会冒泡）代替</td></tr>
+    <tr><td><code>scroll</code></td><td>元素滚动</td><td>不可委托，但可用 <code>passive: true</code> 优化</td></tr>
+    <tr><td><code>load</code> / <code>error</code></td><td>资源加载/错误</td><td>可在捕获阶段通过 <code>window</code> 捕获</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== 四、SyntheticEvent.ts 对应关系 ==================== -->
+<h2>四、SyntheticEvent.ts 核心函数速查</h2>
+
+<table>
+  <thead>
+    <tr><th>函数</th><th>行号</th><th>作用</th><th>调用方</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>initEvent(container, type)</code></td>
+      <td><a href="../packages/react-dom/src/SyntheticEvent.ts#L33">L33</a></td>
+      <td><span class="tag tag-green">事件委托入口</span> 在容器上注册原生监听</td>
+      <td>root.ts (createRoot)</td>
+    </tr>
+    <tr>
+      <td><code>dispatchEvent(container, type, e)</code></td>
+      <td><a href="../packages/react-dom/src/SyntheticEvent.ts#L60">L60</a></td>
+      <td><span class="tag tag-blue">分发中枢</span> 收集路径 → 构造合成事件 → 执行</td>
+      <td>initEvent (回调)</td>
+    </tr>
+    <tr>
+      <td><code>collectPaths(target, container, type)</code></td>
+      <td><a href="../packages/react-dom/src/SyntheticEvent.ts#L107">L107</a></td>
+      <td><span class="tag tag-blue">路径收集</span> 从 target 向上遍历收集 capture/bubble 回调</td>
+      <td>dispatchEvent</td>
+    </tr>
+    <tr>
+      <td><code>createSyntheticEvent(e)</code></td>
+      <td><a href="../packages/react-dom/src/SyntheticEvent.ts#L46">L46</a></td>
+      <td><span class="tag tag-orange">合成事件</span> 覆盖 stopPropagation，加 __stopPropagation</td>
+      <td>dispatchEvent</td>
+    </tr>
+    <tr>
+      <td><code>triggerEventFlow(paths, se)</code></td>
+      <td><a href="../packages/react-dom/src/SyntheticEvent.ts#L86">L86</a></td>
+      <td><span class="tag tag-orange">调度执行</span> 用 Scheduler 优先级执行回调，检查 __stopPropagation</td>
+      <td>dispatchEvent</td>
+    </tr>
+    <tr>
+      <td><code>eventTypeToSchdulerPriority(type)</code></td>
+      <td><a href="../packages/react-dom/src/SyntheticEvent.ts#L142">L142</a></td>
+      <td><span class="tag tag-red">优先级映射</span> click → Immediate, scroll → UserBlocking</td>
+      <td>triggerEventFlow</td>
+    </tr>
+    <tr>
+      <td><code>getEventCallbackNameFromEventType(type)</code></td>
+      <td><a href="../packages/react-dom/src/SyntheticEvent.ts#L99">L99</a></td>
+      <td>事件名映射 click → ['onClickCapture', 'onClick']</td>
+      <td>collectPaths</td>
+    </tr>
+    <tr>
+      <td><code>updateFiberProps(node, props)</code></td>
+      <td><a href="../packages/react-dom/src/SyntheticEvent.ts#L29">L29</a></td>
+      <td><span class="tag tag-green">Props 存储</span> 把 React props 存到 DOM 的 __props 属性上</td>
+      <td>hostConfig (createInstance / completeWork)</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ==================== 五、事件优先级映射 ==================== -->
+<h2>五、事件 → Scheduler 优先级映射表</h2>
+
+<table>
+  <thead>
+    <tr><th>事件类型</th><th>分类</th><th>Scheduler 优先级</th><th>数值</th><th>含义</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>click</code></td>
+      <td>离散事件 (Discrete)</td>
+      <td><code>unstable_ImmediatePriority</code></td>
+      <td>1</td>
+      <td>最高 — 用户期望即时反馈</td>
+    </tr>
+    <tr>
+      <td><code>keydown</code></td>
+      <td>离散事件 (Discrete)</td>
+      <td><code>unstable_ImmediatePriority</code></td>
+      <td>1</td>
+      <td>最高 — 按键响应不能卡</td>
+    </tr>
+    <tr>
+      <td><code>keyup</code></td>
+      <td>离散事件 (Discrete)</td>
+      <td><code>unstable_ImmediatePriority</code></td>
+      <td>1</td>
+      <td>最高 — 同上</td>
+    </tr>
+    <tr>
+      <td><code>scroll</code></td>
+      <td>持续事件 (Continuous)</td>
+      <td><code>unstable_UserBlockingPriority</code></td>
+      <td>2</td>
+      <td>高 — 需要跟手感</td>
+    </tr>
+    <tr>
+      <td>其他事件</td>
+      <td>—</td>
+      <td><code>unstable_NormalPriority</code></td>
+      <td>3</td>
+      <td>普通 — 不紧急</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ==================== 六、面试必背 ==================== -->
+<h2>六、面试必背要点</h2>
+
+<h3>stopPropagation vs stopImmediatePropagation</h3>
+<table>
+  <thead>
+    <tr><th>场景</th><th><code>stopPropagation</code></th><th><code>stopImmediatePropagation</code></th></tr>
+  </thead>
+  <tbody>
+    <tr><td>阻止传播到父元素</td><td>✅</td><td>✅</td></tr>
+    <tr><td>阻止当前元素的后续监听器</td><td>❌</td><td>✅</td></tr>
+    <tr><td>捕获阶段使用</td><td>✅ 可用</td><td>✅ 可用</td></tr>
+  </tbody>
+</table>
+
+<h3>事件委托关键判断方法</h3>
+<table>
+  <thead>
+    <tr><th>方法</th><th>用途</th><th>示例</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>e.target.tagName</code></td><td>判断标签名</td><td><code>e.target.tagName === 'LI'</code></td></tr>
+    <tr><td><code>e.target.matches(sel)</code></td><td>匹配 CSS 选择器</td><td><code>e.target.matches('.btn')</code></td></tr>
+    <tr><td><code>e.target.closest(sel)</code></td><td>向上匹配祖先</td><td><code>e.target.closest('li')</code></td></tr>
+    <tr><td><code>e.target.dataset</code></td><td>读取 data-* 属性</td><td><code>e.target.dataset.id</code></td></tr>
+  </tbody>
+</table>
+
+<hr>
+<footer>
+  <p>
+    本速查表配套课程：<a href="../lessons/0001-event-capture-bubble-synthetic.html">第 1 课：浏览器事件捕获、冒泡 与 React 合成事件</a>
+    · 推荐一手资料：<a href="https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener" target="_blank">MDN addEventListener</a>
+  </p>
+</footer>
+
+</body>
+</html>

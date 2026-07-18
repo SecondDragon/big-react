@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 1 课：浏览器事件捕获、冒泡 与 React 合成事件</title>
+<style>
+  @page { size: A4; margin: 1.8cm; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #fefefe;
+    --fg: #1a1a2e;
+    --fg-muted: #555;
+    --border: #ddd;
+    --accent: #e94560;
+    --accent-dim: #c2324f;
+    --code-bg: #f4f4f5;
+    --callout-bg: #f0f7ff;
+    --callout-border: #90b4d6;
+    --quiz-bg: #fff8e6;
+    --quiz-border: #e6b422;
+    --green: #2d6a4f;
+    --purple: #6b21a8;
+  }
+
+  body {
+    font-family: -apple-system, 'Segoe UI', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    font-size: 15px;
+    line-height: 1.78;
+    color: var(--fg);
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+    background: var(--bg);
+    counter-reset: section;
+  }
+
+  @media print {
+    body { padding: 0; background: white; max-width: none; }
+    .no-print { display: none; }
+  }
+
+  @media (max-width: 640px) {
+    body { padding: 1.5rem 1rem; font-size: 14px; }
+  }
+
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.35rem;
+    color: #0b0b1a;
+  }
+
+  h1 .subtitle {
+    display: block;
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--fg-muted);
+    margin-top: 0.35rem;
+    letter-spacing: 0;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 2.4rem 0 0.9rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--border);
+    color: #0b0b1a;
+  }
+  h2::before {
+    counter-increment: section;
+    content: counter(section) ". ";
+    color: var(--accent);
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 1.6rem 0 0.5rem;
+    color: #1a1a2e;
+  }
+
+  p { margin-bottom: 0.85rem; }
+
+  a { color: var(--accent); text-decoration: none; border-bottom: 0.5px solid var(--accent-dim); }
+  a:hover { color: var(--accent-dim); border-bottom-width: 1.5px; }
+
+  strong { color: #0b0b1a; }
+
+  code {
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Cascadia Code', Consolas, monospace;
+    font-size: 0.88em;
+    background: var(--code-bg);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    color: var(--accent-dim);
+  }
+
+  pre {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    padding: 1.1rem 1.3rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1rem 0 1.2rem;
+    white-space: pre;
+  }
+
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+
+  .callout {
+    background: var(--callout-bg);
+    border-left: 4px solid var(--callout-border);
+    padding: 0.9rem 1.2rem;
+    margin: 1.1rem 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.93rem;
+  }
+  .callout strong { color: #1a3a5c; }
+
+  .warning {
+    background: #fff5f5;
+    border-left: 4px solid var(--accent);
+    padding: 0.9rem 1.2rem;
+    margin: 1.1rem 0;
+    border-radius: 0 6px 6px 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0 1.3rem;
+    font-size: 0.92rem;
+  }
+  thead { background: #f5f5f7; }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 0.55rem 0.75rem;
+    text-align: left;
+  }
+  th { font-weight: 700; color: #333; }
+  tr:nth-child(even) { background: #fafafa; }
+
+  /* Mermaid diagram container */
+  .mermaid-container {
+    background: #fafafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem 1rem;
+    margin: 1.2rem 0;
+    text-align: center;
+    overflow-x: auto;
+  }
+
+  /* Quiz */
+  .quiz {
+    background: var(--quiz-bg);
+    border: 2px solid var(--quiz-border);
+    border-radius: 10px;
+    padding: 1.4rem 1.5rem;
+    margin: 1.8rem 0;
+  }
+  .quiz h3 {
+    margin-top: 0;
+    color: #8b6914;
+    font-size: 1.15rem;
+  }
+  .quiz .q {
+    margin: 1rem 0 0.3rem;
+    font-weight: 700;
+    color: #1a1a2e;
+  }
+  .quiz .options { margin: 0.4rem 0 0.8rem; }
+  .quiz .options label {
+    display: block;
+    padding: 0.35rem 0.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+  .quiz .options label:hover { background: #f0e6c0; }
+  .quiz .answer {
+    background: #e8f5e9;
+    border-left: 3px solid var(--green);
+    padding: 0.7rem 1rem;
+    margin-top: 0.7rem;
+    border-radius: 0 4px 4px 0;
+    display: none;
+    font-size: 0.9rem;
+  }
+  .quiz .answer.show { display: block; }
+  .quiz .reveal-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-top: 0.4rem;
+    font-weight: 600;
+  }
+  .quiz .reveal-btn:hover { background: var(--accent-dim); }
+
+  /* Schematic / ascii art diagram */
+  .schematic {
+    background: #fafafc;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+    font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    white-space: pre;
+    overflow-x: auto;
+    color: #444;
+  }
+
+  /* Comparison grid */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.2rem 0;
+  }
+  @media (max-width: 600px) { .compare { grid-template-columns: 1fr; } }
+  .compare > div {
+    background: #fafafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+  }
+  .compare h4 { margin-bottom: 0.5rem; color: var(--accent); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 2.2rem 0; }
+
+  footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--fg-muted);
+  }
+  footer a { border-bottom: none; }
+</style>
+</head>
+<body>
+
+<h1>
+  浏览器事件捕获与冒泡
+  <span class="subtitle">从原生 DOM 事件模型到 big-react 的合成事件实现</span>
+</h1>
+
+<div class="callout">
+  <strong>本课目标</strong>：彻底理解浏览器事件流的三阶段模型，掌握事件委托和 <code>stopPropagation</code> 的面试常见考点，并读懂你在 <a href="../packages/react-dom/src/SyntheticEvent.ts">SyntheticEvent.ts</a> 中亲手实现的合成事件系统。
+</div>
+
+<div class="callout no-print">
+  <strong>📖 推荐深入阅读</strong>：MDN 的 <a href="https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener" target="_blank">addEventListener 文档</a> 是理解本章所有内容的最佳一手资料。所有代码示例都可以直接在浏览器控制台中运行验证。
+</div>
+
+<!-- ==================== 1. 浏览器原生事件流 ==================== -->
+<h2>浏览器原生事件流</h2>
+
+<p>
+  当你在浏览器中 <strong>点击一个按钮</strong> 时，浏览器并不是只触发这个按钮的事件处理函数。事实上，这个 <code>click</code> 事件会<strong>沿着 DOM 树传递三次</strong>。DOM Level 2 Events 规范定义了这三个阶段：
+</p>
+
+<div class="mermaid-container">
+<pre class="mermaid">
+flowchart LR
+    A["Window"]
+    B["document"]
+    C["html"]
+    D["body"]
+    E["div#parent"]
+    F["button#child"]
+
+    A --> B --> C --> D --> E --> F
+
+    classDef phase1 fill:#f0a0a0,stroke:#e94560,stroke-width:2px,color:#7f1d1d
+    classDef phase2 fill:#ffe4b5,stroke:#e6b422,stroke-width:2px,color:#7f5f00
+    classDef phase3 fill:#a8d8a8,stroke:#2d6a4f,stroke-width:2px,color:#1a3a2c
+
+    class A,B,C,D,E phase1
+    class F phase2
+    style B fill:#f0a0a0,stroke:#e94560,stroke-width:2px,color:#7f1d1d
+</pre>
+</div>
+
+<h3>1.1 三个阶段</h3>
+
+<table>
+  <thead>
+    <tr><th>阶段</th><th>英文名</th><th>方向</th><th>触发顺序</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>捕获阶段</strong></td>
+      <td>Capture Phase</td>
+      <td>从根向下 ↓</td>
+      <td>Window → document → html → body → div → button</td>
+    </tr>
+    <tr>
+      <td><strong>目标阶段</strong></td>
+      <td>Target Phase</td>
+      <td>停驻</td>
+      <td>到达 button（实际点击的元素）</td>
+    </tr>
+    <tr>
+      <td><strong>冒泡阶段</strong></td>
+      <td>Bubble Phase</td>
+      <td>从子向上 ↑</td>
+      <td>button → div → body → html → document → Window</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <strong>🔑 关键记忆法</strong>："<strong>先捕获，后冒泡</strong>"。事件先沿着 DOM 树从祖先走向目标（捕获），命中目标后再从目标走回祖先（冒泡）。大多数日常使用的 <code>onClick</code> 都是在<strong>冒泡阶段</strong>触发的。
+</div>
+
+<h3>1.2 动手验证</h3>
+
+<p>以下代码可以直接在浏览器控制台运行，直观感受事件的三个阶段：</p>
+
+<pre><code>// HTML 结构（在页面中准备）
+// &lt;div id="parent"&gt;
+//   &lt;button id="child"&gt;点我&lt;/button&gt;
+// &lt;/div&gt;
+
+const parent = document.getElementById('parent');
+const child = document.getElementById('child');
+
+// 捕获阶段监听（第三个参数为 true）
+parent.addEventListener('click', () => {
+  console.log('🔴 父元素 捕获阶段');
+}, true);
+
+// 目标阶段（child 上的监听）
+child.addEventListener('click', () => {
+  console.log('🟡 目标元素');
+});
+
+// 冒泡阶段监听（第三个参数为 false 或省略）
+parent.addEventListener('click', () => {
+  console.log('🟢 父元素 冒泡阶段');
+}, false);
+
+// 点击 button 后输出：
+// 🔴 父元素 捕获阶段
+// 🟡 目标元素
+// 🟢 父元素 冒泡阶段</code></pre>
+
+<div class="warning">
+  <strong>⚠️ 注意</strong>：目标阶段比较特殊——在目标元素（button）上注册的 <code>addEventListener</code>，<strong>无论第三个参数是 true 还是 false</strong>，都会按照注册先后顺序触发。因为此时事件已经"到达"了目标，不存在"先经过还是后经过"的问题。
+</div>
+
+<!-- ==================== 1.3 捕获阶段实战场景 ==================== -->
+<h3>1.3 捕获阶段实战场景（addEventListener 第三个参数为 true）</h3>
+
+<p>
+  捕获阶段虽然日常用得少，但在以下三个场景中<strong>不可替代</strong>。核心原因是：
+  捕获阶段发生在<strong>目标元素收到事件之前</strong>，所以你可以做"拦截"或"预处理"。
+</p>
+
+<h4>场景一：全局埋点 / 用户行为分析</h4>
+
+<p><strong>需求</strong>：你需要在用户点击<strong>页面上任意元素</strong>时记录点击位置和文本，但你不希望修改任何现有业务代码。</p>
+
+<pre><code>// 在 document 的捕获阶段统一收集所有点击
+document.addEventListener('click', (e) => {
+  const target = e.target;
+  analytics.send({
+    type: 'click',
+    tag: target.tagName,
+    text: target.textContent?.slice(0, 50),
+    position: { x: e.clientX, y: e.clientY },
+    timestamp: Date.now()
+  });
+}, true); // ← 关键：捕获阶段
+
+// 为什么必须用捕获？
+// 1. 某些业务代码里的 onClick 可能调用了 stopPropagation()
+//    如果埋点在冒泡阶段，stopPropagation 会阻止埋点执行
+//    但捕获阶段在 stopPropagation 之前，保证一定能收到！
+//
+// 2. 某些元素（如 video、iframe）可能阻止了冒泡
+//    捕获阶段不受影响</code></pre>
+
+<div class="callout">
+  <strong>🎯 核心要点</strong>：埋点一定要在<strong>捕获阶段</strong>做。因为业务代码随时可能调用 <code>stopPropagation()</code> 阻止冒泡，你无法控制第三方代码。捕获阶段是事件流的最上游，<strong>没有任何人能阻止你</strong>。
+</div>
+
+<h4>场景二：全局权限拦截 / 按钮禁用控制</h4>
+
+<p><strong>需求</strong>：用户未登录时，阻止所有"需要登录"的按钮操作，且不影响按钮 hover 等其他交互。</p>
+
+<pre><code>// HTML 结构
+// &lt;form id="orderForm"&gt;
+//   &lt;button class="need-auth"&gt;立即购买&lt;/button&gt;
+//   &lt;button class="need-auth"&gt;加入购物车&lt;/button&gt;
+//   &lt;button&gt;查看详情（不需要登录）&lt;/button&gt;
+// &lt;/form&gt;
+
+const orderForm = document.getElementById('orderForm');
+
+// 在表单的捕获阶段统一拦截
+orderForm.addEventListener('click', (e) => {
+  const btn = e.target.closest('.need-auth');
+  if (btn && !userStore.isLoggedIn) {
+    e.stopPropagation();      // 阻止冒泡 → 按钮自己的 onClick 不会执行
+    e.preventDefault();       // 阻止默认行为
+    showLoginModal();         // 弹出登录框
+  }
+}, true); // ← 捕获阶段
+
+// 为什么必须在捕获阶段？
+// 如果用冒泡阶段：按钮自己的 onClick 已经先执行了！
+// 你弹了登录框，但购买请求已经发出去了。
+//
+// 捕获阶段：表单上的监听器先触发 → 检查权限 → 不通过则 stopPropagation
+// → 按钮自己的 onClick 被跳过了 → 完美拦截</code></pre>
+
+<h4>场景三：拖拽时"抢走"子元素的点击事件</h4>
+
+<p><strong>需求</strong>：实现一个拖拽排序列表，用户可能点击列表项的拖拽手柄开始拖拽，也可能只是点击列表项本身做其他操作。你需要在<strong>最外层容器</strong>上统一处理 mousedown。</p>
+
+<pre><code>// 拖拽列表容器
+const list = document.getElementById('sortable-list');
+
+list.addEventListener('mousedown', (e) => {
+  const handle = e.target.closest('.drag-handle');
+  if (handle) {
+    // 用户在拖拽手柄上按下了鼠标 → 开始拖拽
+    startDrag(handle.parentElement);
+  }
+  // 不是拖拽手柄？什么都不做，让子元素自己的 click 正常触发
+}, true); // ← 捕获阶段
+
+// 为什么必须用捕获？
+// 子元素可能有自己的 mousedown 处理器
+// 捕获阶段保证容器先感知到 mousedown，决定是否"抢走"事件
+// 如果是拖拽手柄 → 容器接管后续的 mousemove/mouseup
+// 如果不是 → 事件正常冒泡，子元素的 click 照常执行</code></pre>
+
+<!-- ==================== 1.4 冒泡阶段实战场景 ==================== -->
+<h3>1.4 冒泡阶段实战场景（addEventListener 第三个参数为 false / 默认）</h3>
+
+<p>
+  冒泡阶段是你<strong>日常使用最多的模式</strong>，也是默认值。它的核心优势在于<strong>事件委托</strong>——把多个子元素的监听器合并到父元素上。
+</p>
+
+<h4>场景一：动态列表（事件委托的经典应用）</h4>
+
+<p><strong>需求</strong>：一个 Todo 列表，用户可以添加/删除项。新添加的项也应该能响应点击删除。你不会想每新增一项就去绑定一次事件。</p>
+
+<pre><code>&lt;ul id="todo-list"&gt;
+  &lt;li&gt;买牛奶 &lt;button class="delete-btn"&gt;×&lt;/button&gt;&lt;/li&gt;
+  &lt;li&gt;写代码 &lt;button class="delete-btn"&gt;×&lt;/button&gt;&lt;/li&gt;
+  &lt;li&gt;健身   &lt;button class="delete-btn"&gt;×&lt;/button&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+// ❌ 错误做法：每次新增都要手动绑事件
+function addTodo(text) {
+  const li = document.createElement('li');
+  li.innerHTML = `${text} &lt;button class="delete-btn"&gt;×&lt;/button&gt;`;
+  // 每次都得手动给新 button 绑事件！
+  li.querySelector('.delete-btn').addEventListener('click', deleteItem);
+  list.appendChild(li);
+}
+
+// ✅ 事件委托：只在 ul 上绑定一次，利用冒泡
+document.getElementById('todo-list')
+  .addEventListener('click', (e) =&gt; {
+    if (e.target.classList.contains('delete-btn')) {
+      const li = e.target.closest('li');
+      li.remove();          // 移除列表项
+    }
+    // 点击的是 li 本身而不是删除按钮？编辑它
+    else if (e.target.tagName === 'LI') {
+      e.target.contentEditable = true;
+      e.target.focus();
+    }
+  });
+// 之后任意时刻 addTodo()，新 button 不需要额外绑事件！
+// 因为点击会自然冒泡到 ul，被这个监听器捕获</code></pre>
+
+<div class="callout">
+  <strong>💡 为什么这是"经典应用"？</strong><br>
+  这个例子体现了事件委托的全部优势：<strong>1 个监听器</strong>管理<strong>无数动态子元素</strong>。这也是你的 SyntheticEvent.ts 中 <code>initEvent</code> 在容器上只绑定一次的根本原因。
+</div>
+
+<h4>场景二：表单字段统一验证 / 数据收集</h4>
+
+<p><strong>需求</strong>：一个复杂表单有 20+ 个输入框，你需要监听所有 input 的 blur 事件做校验，并在表单级统一收集数据。</p>
+
+<pre><code>&lt;form id="profile-form"&gt;
+  &lt;input name="username" /&gt;
+  &lt;input name="email" /&gt;
+  &lt;input name="phone" /&gt;
+  &lt;select name="city"&gt;...&lt;/select&gt;
+  &lt;textarea name="bio"&gt;&lt;/textarea&gt;
+  &lt;!-- 更多字段... --&gt;
+&lt;/form&gt;
+
+const form = document.getElementById('profile-form');
+
+// ❌ 不好的做法：给每个字段单独绑定
+form.querySelectorAll('input, select, textarea').forEach(el =&gt; {
+  el.addEventListener('blur', validateField);
+  // 20 个字段 → 20 个监听器
+});
+
+// ✅ 事件委托：利用 blur 事件会冒泡的特性
+// 注意：原生 blur 不冒泡！要用 focusout 代替
+form.addEventListener('focusout', (e) =&gt; {
+  const field = e.target;
+  if (field.name) {         // 有 name 属性的才是表单字段
+    validateField(field);   // 统一校验
+    formData[field.name] = field.value;  // 统一收集
+    console.log(`${field.name} 校验通过:`, field.value);
+  }
+});
+
+// 后续动态新增的字段（比如"添加更多收货地址"）也自动获得校验</code></pre>
+
+<h4>场景三：标签页 / Chip 删除</h4>
+
+<p><strong>需求</strong>：一个标签组件，每个标签有 × 按钮可以删除。父容器管理标签数组。</p>
+
+<pre><code>&lt;div class="tag-container"&gt;
+  &lt;span class="tag"&gt;
+    React &lt;button class="tag-close" data-tag="React"&gt;×&lt;/button&gt;
+  &lt;/span&gt;
+  &lt;span class="tag"&gt;
+    TypeScript &lt;button class="tag-close" data-tag="TypeScript"&gt;×&lt;/button&gt;
+  &lt;/span&gt;
+  &lt;span class="tag"&gt;
+    合成事件 &lt;button class="tag-close" data-tag="合成事件"&gt;×&lt;/button&gt;
+  &lt;/span&gt;
+&lt;/div&gt;
+
+document.querySelector('.tag-container')
+  .addEventListener('click', (e) =&gt; {
+    const closeBtn = e.target.closest('.tag-close');
+    if (closeBtn) {
+      const tagName = closeBtn.dataset.tag;
+      // 从数组中移除
+      tags = tags.filter(t =&gt; t !== tagName);
+      renderTags();  // 重新渲染
+    }
+    // 点击标签本身（非 × 按钮）
+    else if (e.target.classList.contains('tag')) {
+      console.log('选中标签:', e.target.textContent.trim());
+    }
+  });
+// 标签数据驱动渲染，永远不需要手动管理事件绑定</code></pre>
+
+<h4>场景四：表格行操作</h4>
+
+<p><strong>需求</strong>：一个 1000 行的数据表格，每行有编辑、删除、查看详情三个按钮。如果用传统方式，你需要绑定 3000 个事件监听器。</p>
+
+<pre><code>&lt;table id="data-table"&gt;
+  &lt;tbody&gt;
+    &lt;tr data-id="1"&gt;
+      &lt;td&gt;张三&lt;/td&gt;
+      &lt;td&gt;
+        &lt;button class="action-btn edit"&gt;编辑&lt;/button&gt;
+        &lt;button class="action-btn delete"&gt;删除&lt;/button&gt;
+        &lt;button class="action-btn detail"&gt;详情&lt;/button&gt;
+      &lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;!-- ... 999 行 ... --&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+document.getElementById('data-table')
+  .addEventListener('click', (e) =&gt; {
+    const row = e.target.closest('tr');
+    const id = row?.dataset.id;
+    if (!id) return;
+
+    if (e.target.classList.contains('edit')) {
+      openEditModal(id);     // 编辑弹窗
+    } else if (e.target.classList.contains('delete')) {
+      confirmAndDelete(id);  // 删除确认
+    } else if (e.target.classList.contains('detail')) {
+      navigateToDetail(id);  // 跳转详情页
+    }
+  });
+// 1000 行 × 3 个按钮 = 1 个监听器（而非 3000 个）
+// 内存占用相差 3000 倍</code></pre>
+
+<!-- ==================== 1.5 捕获 vs 冒泡：一张表选对阶段 ==================== -->
+<h3>1.5 捕获 vs 冒泡：什么时候用哪个？</h3>
+
+<table>
+  <thead>
+    <tr><th>场景</th><th>用捕获 (true)</th><th>用冒泡 (false)</th><th>原因</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>全局埋点 / 行为分析</td>
+      <td>✅</td>
+      <td>❌</td>
+      <td>业务代码的 stopPropagation 会阻止冒泡埋点</td>
+    </tr>
+    <tr>
+      <td>权限拦截 / 登录检测</td>
+      <td>✅</td>
+      <td>❌</td>
+      <td>必须在子元素自己的事件之前拦截</td>
+    </tr>
+    <tr>
+      <td>拖拽（容器接管子元素事件）</td>
+      <td>✅</td>
+      <td>❌</td>
+      <td>容器需要"抢先"判断是否接管</td>
+    </tr>
+    <tr>
+      <td>事件委托（动态列表等）</td>
+      <td>❌</td>
+      <td>✅</td>
+      <td>利用冒泡自然汇聚到父元素</td>
+    </tr>
+    <tr>
+      <td>表单统一校验 / 数据收集</td>
+      <td>❌</td>
+      <td>✅</td>
+      <td>利用 focusout / blur 冒泡到 form</td>
+    </tr>
+    <tr>
+      <td>普通按钮点击</td>
+      <td>❌</td>
+      <td>✅</td>
+      <td>日常默认行为，99% 的情况</td>
+    </tr>
+    <tr>
+      <td>大数据表格行操作</td>
+      <td>❌</td>
+      <td>✅</td>
+      <td>事件委托减少内存占用（N 倍）</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="warning">
+  <strong>🤔 和你的 SyntheticEvent.ts 有什么关系？</strong><br>
+  你在 <a href="../packages/react-dom/src/SyntheticEvent.ts">SyntheticEvent.ts</a> 中 <code>initEvent</code> 用的是<strong>直接在容器上 addEventListener，第三个参数为默认的 false（冒泡阶段）</strong>。然后 React <strong>自己模拟捕获和冒泡顺序</strong>——这就是 <code>collectPaths</code> 里 <code>unshift</code> vs <code>push</code> 的意义所在。React 只在容器上绑一次冒泡监听，然后自己沿着 Fiber 树去收集回调并决定执行顺序。
+</div>
+
+<!-- ==================== 2. addEventListener 的第三个参数 ==================== -->
+<h2>addEventListener 第三个参数完整速查</h2>
+
+<p><code>addEventListener</code> 的第三个参数决定了监听器在哪个阶段触发，以及更多行为控制：</p>
+
+<table>
+  <thead>
+    <tr><th>写法</th><th>语义</th><th>触发时机</th><th>适用场景</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>false</code>（默认）</td><td>冒泡阶段</td><td>事件从目标向上冒泡时</td><td>事件委托、日常开发</td></tr>
+    <tr><td><code>true</code></td><td>捕获阶段</td><td>事件从根向下捕获时</td><td>埋点、权限拦截、拖拽接管</td></tr>
+    <tr><td><code>{ capture: false }</code></td><td>对象形式-冒泡</td><td>同 <code>false</code></td><td>需要搭配其他选项时</td></tr>
+    <tr><td><code>{ capture: true }</code></td><td>对象形式-捕获</td><td>同 <code>true</code></td><td>同上</td></tr>
+    <tr><td><code>{ once: true }</code></td><td>只触发一次</td><td>首次触发后自动移除</td><td>初始化、一次性引导</td></tr>
+    <tr><td><code>{ passive: true }</code></td><td>被动模式</td><td>不调用 preventDefault</td><td>scroll/touch 性能优化</td></tr>
+  </tbody>
+</table>
+
+<pre><code>// 以下三种写法等价
+el.addEventListener('click', handler, false);
+el.addEventListener('click', handler, { capture: false });
+el.addEventListener('click', handler);  // 默认 false
+
+// 以下两种写法等价
+el.addEventListener('click', handler, true);
+el.addEventListener('click', handler, { capture: true });
+
+// 组合使用：只在捕获阶段触发一次
+el.addEventListener('click', handler, { capture: true, once: true });
+
+// 滚动性能优化：告诉浏览器不会阻止默认滚动
+el.addEventListener('scroll', handler, { passive: true });</code></pre>
+
+<!-- ==================== 3. stopPropagation 与 stopImmediatePropagation ==================== -->
+<h2>面试高频：stopPropagation 与 stopImmediatePropagation</h2>
+
+<p>这两个方法在面试中的考察频率很高，因为它们能精准测试候选人对事件模型的掌握程度。</p>
+
+<div class="compare">
+<div>
+  <h4>event.stopPropagation()</h4>
+  <p>阻止事件<strong>继续</strong>传播到下一层 DOM 节点。<br>同层下一个监听器<strong>仍会</strong>执行。</p>
+  <pre><code>el.addEventListener('click', (e) => {
+  e.stopPropagation();
+  // 父节点收不到这个事件了
+  // 但 el 上排在我后面的监听器还是会跑
+});</code></pre>
+</div>
+<div>
+  <h4>event.stopImmediatePropagation()</h4>
+  <p>阻止事件<strong>继续</strong>传播 + 阻止<strong>同一个元素上排在后面</strong>的监听器。</p>
+  <pre><code>el.addEventListener('click', (e) => {
+  e.stopImmediatePropagation();
+  // 1. 父节点收不到了
+  // 2. el 上排我后面的监听器也跳过了
+});</code></pre>
+</div>
+</div>
+
+<div class="warning">
+  <strong>🎯 必会面试题</strong>：一个元素上绑了 3 个 click 监听 A、B、C，A 中调了 <code>stopImmediatePropagation()</code>。问 B 和 C 以及父元素是否会收到事件？<br>
+  <strong>答</strong>：B 和 C <strong>不会</strong>（同一元素上后面的都被阻止），父元素也<strong>不会</strong>（冒泡被阻止）。
+</div>
+
+<pre><code>// 经典面试题运行验证
+child.addEventListener('click', () => console.log('A'), false);
+child.addEventListener('click', (e) => {
+  console.log('B — 调用了 stopPropagation');
+  e.stopPropagation();
+}, false);
+child.addEventListener('click', () => console.log('C'), false);
+
+parent.addEventListener('click', () => console.log('parent 冒泡'), false);
+
+// 输出：A → B → C（注意 C 仍然执行了！）
+// parent 冒泡 → 不执行（被阻止了）
+//
+// 如果把 stopPropagation 换成 stopImmediatePropagation：
+// 输出：A → B（C 也被跳过了）</code></pre>
+
+<!-- ==================== 4. 事件委托 ==================== -->
+<h2>事件委托（Event Delegation）</h2>
+
+<p>事件委托是<strong>利用事件冒泡</strong>实现的经典设计模式。它的核心思想是：<strong>不在每个子元素上绑定事件，而是只在父元素上绑定一次</strong>，通过 <code>event.target</code> 判断实际点击的是哪个子元素。</p>
+
+<pre><code>// ❌ 不好的做法：给每个 li 都绑事件
+document.querySelectorAll('li').forEach(li => {
+  li.addEventListener('click', handleClick);
+});
+
+// ✅ 事件委托：只在 ul 上绑定一次
+document.querySelector('ul').addEventListener('click', (e) => {
+  if (e.target.tagName === 'LI') {
+    console.log('点击了：', e.target.textContent);
+    // 即使后续动态新增的 li，也会自动被这个监听器捕获！
+  }
+});</code></pre>
+
+<div class="callout">
+  <strong>💡 事件委托的三大优势</strong>：
+  <ol>
+    <li><strong>内存节约</strong>：10000 个元素只需要 1 个监听器</li>
+    <li><strong>动态元素支持</strong>：后续新增的子元素自动获得事件支持</li>
+    <li><strong>代码简洁</strong>：不需要在挂载/卸载时管理监听器</li>
+  </ol>
+</div>
+
+<!-- ==================== 5. big-react 的合成事件 ==================== -->
+<h2>big-react 的合成事件系统</h2>
+
+<p>
+  现在，我们把原生事件模型和你在
+  <a href="../packages/react-dom/src/SyntheticEvent.ts">SyntheticEvent.ts</a>
+  中的实现逐行对照。
+</p>
+
+<h3>5.1 整体架构</h3>
+
+<div class="mermaid-container">
+<pre class="mermaid">
+sequenceDiagram
+    participant User as 用户点击按钮
+    participant Browser as 浏览器
+    participant Init as initEvent 容器监听器
+    participant Dispatch as dispatchEvent 分发入口
+    participant Collect as collectPaths 收集路径
+    participant Flow as triggerEventFlow 执行回调
+
+    User->>Browser: 点击 button
+    Browser->>Init: 冒泡到 container，触发原生事件
+    Init->>Dispatch: 构造合成事件，调用 collectPaths
+    Dispatch->>Collect: 从 target 向上遍历到 container
+    Collect-->>Dispatch: 返回 capture 和 bubble 回调数组
+    Dispatch->>Flow: 遍历 capture 数组
+    Flow->>Flow: 用 scheduler 优先级调度执行
+    Dispatch->>Flow: 检查 __stopPropagation
+    Flow->>Flow: 遍历 bubble 数组
+</pre>
+</div>
+
+<h3>5.2 事件委托的实现</h3>
+
+<p>你的代码中的事件委托，对应关系如下：</p>
+
+<table>
+  <thead>
+    <tr><th>原生概念</th><th>你的代码</th><th>文件位置</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>在容器上绑定事件</td>
+      <td><code>container.addEventListener(eventType, ...)</code></td>
+      <td><a href="../packages/react-dom/src/SyntheticEvent.ts#L41">SyntheticEvent.ts:41</a></td>
+    </tr>
+    <tr>
+      <td>从 target 向上收集回调</td>
+      <td><code>collectPaths(targetElement, container, eventType)</code></td>
+      <td><a href="../packages/react-dom/src/SyntheticEvent.ts#L107">SyntheticEvent.ts:107</a></td>
+    </tr>
+    <tr>
+      <td>React 的 Props 存储</td>
+      <td><code>node[elementPropsKey] = props</code>（存在 <code>__props</code> 上）</td>
+      <td><a href="../packages/react-dom/src/SyntheticEvent.ts#L29">SyntheticEvent.ts:29</a></td>
+    </tr>
+    <tr>
+      <td>事件类型映射</td>
+      <td><code>click → ['onClickCapture', 'onClick']</code></td>
+      <td><a href="../packages/react-dom/src/SyntheticEvent.ts#L99">SyntheticEvent.ts:99</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>看一下核心的 <code>collectPaths</code> 方法：</p>
+
+<pre><code>function collectPaths(
+  targetElement: DOMElement,
+  container: Container,
+  eventType: string
+) {
+  const paths: Paths = { capture: [], bubble: [] };
+
+  while (targetElement && targetElement !== container) {
+    // 从 DOM 元素的 __props 上读取 React 事件回调
+    const elementProps = targetElement[elementPropsKey];
+    if (elementProps) {
+      const callbackNameList = getEventCallbackNameFromEventType(eventType);
+      // click → ['onClickCapture', 'onClick']
+      if (callbackNameList) {
+        callbackNameList.forEach((callbackName, i) => {
+          const eventCallback = elementProps[callbackName];
+          if (eventCallback) {
+            if (i === 0) {
+              // capture 阶段：unshift（倒序插入，保证从外到内）
+              paths.capture.unshift(eventCallback);
+            } else {
+              // bubble 阶段：push（正序插入，保证从内到外）
+              paths.bubble.push(eventCallback);
+            }
+          }
+        });
+      }
+    }
+    targetElement = targetElement.parentNode as DOMElement;
+  }
+  return paths;
+}</code></pre>
+
+<h3>5.3 合成事件的核心：覆盖 stopPropagation</h3>
+
+<p>
+  你实现的 <code>createSyntheticEvent</code> 覆盖了浏览器原生的 <code>stopPropagation</code>，
+  增加了一个内部的 <code>__stopPropagation</code> 标记。这样一来，React 可以<strong>自行控制</strong>
+  事件是否继续遍历捕获/冒泡链：
+</p>
+
+<pre><code>function createSyntheticEvent(e: Event) {
+  const syntheticEvent = e as SyntheticEvent;
+  syntheticEvent.__stopPropagation = false;
+  const originStopPropagation = e.stopPropagation;
+
+  syntheticEvent.stopPropagation = () => {
+    syntheticEvent.__stopPropagation = true;   // React 内部标记
+    if (originStopPropagation) {
+      originStopPropagation();                  // 也调用原生的
+    }
+  };
+  return syntheticEvent;
+}</code></pre>
+
+<div class="callout">
+  <strong>🔑 为什么需要自己的标记？</strong><br>
+  因为 React 是通过 <code>collectPaths</code> 沿着<strong>Fiber 树</strong>（通过 DOM 桥接）收集回调的，而不是依赖浏览器的事件冒泡链。当用户调用 <code>e.stopPropagation()</code> 后，浏览器会阻止原生事件继续冒泡，但 React 自己的 <code>triggerEventFlow</code> 循环<strong>不知道这件事</strong>。所以需要在合成事件上打一个自己的标记，这样 <code>triggerEventFlow</code> 在遍历回调时能读到这个标记并停下来。
+</div>
+
+<h3>5.4 调度优先级映射</h3>
+
+<p>这是你的合成事件中<strong>最有 React 18 特色</strong>的部分——根据事件类型披上不同的 Scheduler 优先级：</p>
+
+<pre><code>function eventTypeToSchdulerPriority(eventType: string) {
+  switch (eventType) {
+    case 'click':
+    case 'keydown':
+    case 'keyup':
+      return unstable_ImmediatePriority;    // 离散事件，最高优先级
+    case 'scroll':
+      return unstable_UserBlockingPriority; // 持续事件，中优先级
+    default:
+      return unstable_NormalPriority;       // 普通事件
+  }
+}
+
+function triggerEventFlow(paths, se) {
+  for (let i = 0; i &lt; paths.length; i++) {
+    unstable_runWithPriority(eventTypeToSchdulerPriority(se.type), () => {
+      callback.call(null, se);
+    });
+    if (se.__stopPropagation) break;
+  }
+}</code></pre>
+
+<table>
+  <thead>
+    <tr><th>事件类型</th><th>Scheduler 优先级</th><th>场景</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>click</code> / <code>keydown</code></td><td><code>ImmediatePriority</code></td><td>用户点击、按键——<strong>期望立刻响应</strong></td></tr>
+    <tr><td><code>scroll</code></td><td><code>UserBlockingPriority</code></td><td>页面滚动——<strong>需要跟手感</strong></td></tr>
+    <tr><td>其他事件</td><td><code>NormalPriority</code></td><td>普通交互</td></tr>
+  </tbody>
+</table>
+
+<p>这是 React 18 并发模式的重要基础：用户点击后的 <code>setState</code> 自动获得最高优先级，不会被低优先级的渲染任务阻塞。</p>
+
+<h3>5.5 完整执行流程（以点击为例）</h3>
+
+<div class="mermaid-container">
+<pre class="mermaid">
+flowchart TD
+    S(["用户点击 button#child"])
+    S --> B["浏览器原生 click 事件冒泡"]
+    B --> I["到达 div#root 容器<br/>initEvent 注册的监听器触发"]
+    I --> D["dispatchEvent"]
+    D --> D1["collectPaths: 从 child 向上遍历到 root"]
+    D1 --> D2{"遍历每个元素的 __props"}
+    D2 -->|"有 onClickCapture"| D3["paths.capture.unshift 回调"]
+    D2 -->|"有 onClick"| D4["paths.bubble.push 回调"]
+    D3 --> D5["createSyntheticEvent: 覆盖 stopPropagation"]
+    D4 --> D5
+    D5 --> D6["triggerEventFlow capture 数组"]
+    D6 --> D7{"__stopPropagation?"}
+    D7 -->|"true"| E(["提前终止，跳过冒泡"])
+    D7 -->|"false"| D8["triggerEventFlow bubble 数组"]
+    D8 --> E2(["完成"])
+
+    classDef start fill:#e8f5e9,stroke:#2d6a4f,color:#1a3a2c
+    classDef process fill:#e3f2fd,stroke:#1565c0,color:#0d3b66
+    classDef decision fill:#fff3e0,stroke:#e65100,color:#7a3000
+    classDef end fill:#fce4ec,stroke:#c62828,color:#4a0a0a
+
+    class S,E,E2 start
+    class B,I,D,D1,D3,D4,D5,D6,D8 process
+    class D2,D7 decision
+</pre>
+</div>
+
+<!-- ==================== 6. 面试真题 ==================== -->
+<h2>面试中的常见真题</h2>
+
+<h3>Q1：事件捕获和冒泡的执行顺序是什么？</h3>
+<p><strong>答</strong>：捕获先于冒泡，目标阶段的监听器按注册顺序执行。口诀："祖先向下捕获，到达目标执行，再从子向上冒泡"。</p>
+
+<h3>Q2：React 为什么要用自己的合成事件？</h3>
+<p><strong>答</strong>：三个核心目的——</p>
+<ol>
+  <li><strong>事件委托（性能）</strong>：只在容器上绑定一个监听器，而非每个元素都绑</li>
+  <li><strong>跨浏览器一致性</strong>：抹平不同浏览器的行为差异</li>
+  <li><strong>调度优先级（React 18）</strong>：根据事件类型（click vs scroll）匹配不同的 Scheduler 优先级，支撑并发渲染</li>
+</ol>
+
+<h3>Q3：e.target 和 e.currentTarget 的区别？</h3>
+<p>
+  <code>e.target</code>：触发事件的<strong>源元素</strong>（最深层的子元素）<br>
+  <code>e.currentTarget</code>：<strong>当前监听器绑定的元素</strong>（在事件委托中，就是 <code>this</code> / <code>addEventListener 绑定的那个元素</code>）
+</p>
+
+<h3>Q4：事件委托中如何判断 target 是某个元素？</h3>
+<pre><code>// 方法1：tagName
+if (e.target.tagName === 'LI') { /* ... */ }
+
+// 方法2：closest（向上匹配选中的祖先）
+const li = e.target.closest('li');
+if (li) { /* ... */ }
+
+// 方法3：matches
+if (e.target.matches('.my-class')) { /* ... */ }</code></pre>
+
+<!-- ==================== 7. 交互测验 ==================== -->
+<h2>交互测验 —— 自检理解程度</h2>
+
+<div class="quiz">
+  <h3>问题 1</h3>
+  <p class="q">点击页面最内层的 button 后，以下代码的输出顺序是什么？</p>
+  <pre><code>// HTML: div#a > div#b > button#c
+a.addEventListener('click', () => console.log(1), true);
+b.addEventListener('click', () => console.log(2), true);
+c.addEventListener('click', () => console.log(3), true);
+b.addEventListener('click', () => console.log(4));
+a.addEventListener('click', () => console.log(5));</code></pre>
+  <div class="options">
+    <label><input type="radio" name="q1" value="A"> A. 1 2 3 4 5</label>
+    <label><input type="radio" name="q1" value="B"> B. 3 2 1 4 5</label>
+    <label><input type="radio" name="q1" value="C"> C. 1 2 3 5 4</label>
+    <label><input type="radio" name="q1" value="D"> D. 5 4 3 2 1</label>
+  </div>
+  <button class="reveal-btn" onclick="document.getElementById('a1').classList.toggle('show')">显示答案</button>
+  <div class="answer" id="a1">
+    <strong>答案：A（1 2 3 4 5）</strong><br>
+    <strong>解析</strong>：a(true) → b(true) 是捕获阶段，先执行。到达 c(target) 阶段，按注册顺序执行 c(true)。然后冒泡：b(false) → a(false)。第一个 a 用的是 true(捕获)，最后一个 a 用的是 false(冒泡)，所以顺序是 1 2 3 4 5。
+  </div>
+</div>
+
+<div class="quiz">
+  <h3>问题 2</h3>
+  <p class="q">React 合成事件中，<code>collectPaths</code> 的捕获回调为什么用 <code>unshift</code> 而冒泡用 <code>push</code>？</p>
+  <div class="options">
+    <label><input type="radio" name="q2" value="A"> A. unshift 性能更好</label>
+    <label><input type="radio" name="q2" value="B"> B. 保证捕获阶段从外到内、冒泡阶段从内到外的顺序</label>
+    <label><input type="radio" name="q2" value="C"> C. 为了和浏览器原生行为相反</label>
+    <label><input type="radio" name="q2" value="D"> D. 没有特殊原因，只是编码习惯</label>
+  </div>
+  <button class="reveal-btn" onclick="document.getElementById('a2').classList.toggle('show')">显示答案</button>
+  <div class="answer" id="a2">
+    <strong>答案：B</strong><br>
+    <strong>解析</strong>：<code>collectPaths</code> 是从 target 向上遍历，先遇到内层元素后遇到外层元素。<br>
+    - <strong>捕获</strong>需要从外到内（外层先执行），但遍历是从内到外，所以用 <code>unshift</code> 把后遇到的外层回调插在前面<br>
+    - <strong>冒泡</strong>需要从内到外（内层先执行），恰好和遍历方向一致，直接用 <code>push</code>
+  </div>
+</div>
+
+<div class="quiz">
+  <h3>问题 3</h3>
+  <p class="q">在你的 SyntheticEvent.ts 中，<code>__stopPropagation</code> 标记被检查了几次？分别在哪些位置？</p>
+  <div class="options">
+    <label><input type="radio" name="q3" value="A"> A. 1 次，在 triggerEventFlow 中</label>
+    <label><input type="radio" name="q3" value="B"> B. 2 次，在 triggerEventFlow 和 dispatchEvent 中</label>
+    <label><input type="radio" name="q3" value="C"> C. 3 次，在 collectPaths、triggerEventFlow、dispatchEvent 中</label>
+    <label><input type="radio" name="q3" value="D"> D. 只在 createSyntheticEvent 中设置，不检查</label>
+  </div>
+  <button class="reveal-btn" onclick="document.getElementById('a3').classList.toggle('show')">显示答案</button>
+  <div class="answer" id="a3">
+    <strong>答案：B（2 次）</strong><br>
+    <strong>解析</strong>：<br>
+    1. <code>triggerEventFlow</code> 的 for 循环中（L93）：每次迭代检查，提前 break 终止同阶段的剩余回调<br>
+    2. <code>dispatchEvent</code> 中（L80）：捕获阶段执行完后检查，决定是否跳过整个冒泡阶段<br>
+    这两个检查分别对应"阶段内中断"和"阶段间中断"。
+  </div>
+</div>
+
+<div class="quiz">
+  <h3>问题 4（实战）</h3>
+  <p class="q">以下代码，如果你点击了 <code>li</code> 元素，控制台会输出什么？</p>
+  <pre><code>const ul = document.querySelector('ul');
+ul.addEventListener('click', (e) => {
+  console.log('ul 捕获', e.eventPhase);
+}, true);
+ul.addEventListener('click', (e) => {
+  console.log('ul 冒泡', e.eventPhase);
+}, false);
+
+// 点击 li 后：</code></pre>
+  <div class="options">
+    <label><input type="radio" name="q4" value="A"> A. 只输出 "ul 冒泡 3"</label>
+    <label><input type="radio" name="q4" value="B"> B. 先 "ul 捕获 1"，再 "ul 冒泡 3"</label>
+    <label><input type="radio" name="q4" value="C"> C. 先 "ul 冒泡 3"，再 "ul 捕获 1"</label>
+    <label><input type="radio" name="q4" value="D"> D. 输出 "ul 捕获 1" 和 "ul 捕获 3"</label>
+  </div>
+  <button class="reveal-btn" onclick="document.getElementById('a4').classList.toggle('show')">显示答案</button>
+  <div class="answer" id="a4">
+    <strong>答案：B</strong><br>
+    <strong>解析</strong>：<code>eventPhase</code> 的值：1=CAPTURING_PHASE, 2=AT_TARGET, 3=BUBBLING_PHASE。<br>
+    点击 li 后，事件先经过 ul 的捕获阶段（phase=1），因为在 ul 上注册了捕获监听器，所以触发它输出 "ul 捕获 1"。<br>
+    然后到达 li（target），最后冒泡回到 ul，触发冒泡监听器，输出 "ul 冒泡 3"。<br>
+    注意：因为监听器绑在 ul 上而非 li 上，所以 eventPhase 始终是 1 或 3（不会是 2）。
+  </div>
+</div>
+
+<hr>
+
+<h2>总结：一张图搞懂所有</h2>
+
+<div class="schematic">
+┌─────────────────────────────────────────────────────────────────┐
+│                     事件流全景图                                   │
+│                                                                  │
+│   Window ──▶ document ──▶ html ──▶ body ──▶ div ──▶ button     │
+│    │                                                       │    │
+│    │      ◀── CAPTURE PHASE（捕获阶段，addEventListener(..., true)）──▶  │
+│    │                                                       │    │
+│    │                          button ◀ TARGET（目标阶段）    │    │
+│    │                                                       │    │
+│    │      ◀── BUBBLE PHASE（冒泡阶段，addEventListener(..., false)）──▶  │
+│    │                                                       │    │
+│  ──── 你的 SyntheticEvent.ts 干了什么 ────                       │
+│    │                                                       │    │
+│    │  ① initEvent: 只在 container 上绑一次原生事件               │
+│    │  ② collectPaths: 从 e.target 向上遍历收集 onClick/onClickCapture  │
+│    │  ③ createSyntheticEvent: 覆盖 stopPropagation，加 __stopPropagation │
+│    │  ④ triggerEventFlow: 用 Scheduler 优先级回调执行             │
+│    │  ⑤ dispatchEvent: 先捕获、检查标记、再冒泡                  │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+</div>
+
+<hr>
+
+<footer>
+  <p>
+    <strong>课程编号</strong>：0001-event-capture-bubble-synthetic ·
+    <strong>日期</strong>：2026-07-15 ·
+    <strong>推荐阅读</strong>：
+    <a href="https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener" target="_blank">MDN: addEventListener</a> ·
+    <a href="https://dom.spec.whatwg.org/#introduction-to-dom-events" target="_blank">DOM 事件规范</a>
+  </p>
+  <p>
+    <a href="../reference/event-flow-reference.html">📋 事件流速查表</a> ·
+    <a href="../learning-records/0002-event-system.md">📝 学习记录</a>
+  </p>
+  <p style="margin-top: 1rem;">
+    💬 如果有任何疑问，直接在这个教学会话中继续提问。我会根据你的 <a href="../MISSION.md">学习目标</a> 深入解答。
+  </p>
+</footer>
+
+</body>
+</html>

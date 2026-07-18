@@ -21,10 +21,26 @@ export const HostRoot = 3;
 export const HostComponent = 5;
 // 文本节点
 export const HostText = 6;
+/**
+ * Fragment 节点（<></> 或 <Fragment></Fragment>）。
+ * 在 fiber 树中作为抽象容器存在，不产生真实 DOM。
+ */
 export const Fragment = 7;
+/**
+ * Context.Provider 对应的 fiber 类型。
+ * 用于向下传递 context 值，stateNode 指向 Context 对象。
+ */
 export const ContextProvider = 8;
 
+/**
+ * Suspense 组件对应的 fiber 类型。
+ * 用于处理异步加载，可显示 fallback。
+ */
 export const SuspenseComponent = 13;
+/**
+ * Offscreen（Suspense 内部）对应的 fiber 类型。
+ * 用于隐藏/显示子树（display:none 切换），不卸载。
+ */
 export const OffscreenComponent = 14;
 
 export const LazyComponent = 16;
