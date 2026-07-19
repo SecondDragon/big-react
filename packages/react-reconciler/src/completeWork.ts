@@ -11,7 +11,7 @@ import {
 	Container,
 	createInstance,
 	createTextInstance,
-	updateFiberProps
+	Instance
 } from 'hostConfig';
 import { NoFlags, Update } from './fiberFlags';
 
@@ -40,8 +40,11 @@ export const completeWork = (wip: FiberNode) => {
 	switch (wip.tag) {
 		case HostComponent:
 			if (current !== null && wip.stateNode) {
-				//
-				updateFiberProps(wip.stateNode, newProps);
+				// TODO update
+				// 1. props是否变化 {onClick: xx} {onClick: xxx}
+				// 2. 变了 Update flag
+				// className style
+				markUpdate(wip);
 				// 	TODO:更新
 			} else {
 				// 		构建Dom
@@ -101,8 +104,12 @@ export const completeWork = (wip: FiberNode) => {
  * @param parent 父 DOM 元素（刚通过 createInstance 创建的）
  * @param wip 当前 fiber，遍历其 child 子树
  */
-export function appendAllChildren(parent: Container, wip: FiberNode) {
+export function appendAllChildren(
+	parent: Container | Instance,
+	wip: FiberNode
+) {
 	let node = wip.child;
+
 	while (node !== null) {
 		if (node.tag === HostComponent || node.tag === HostText) {
 			appendInitialChild(parent, node?.stateNode);

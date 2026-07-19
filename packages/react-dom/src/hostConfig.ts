@@ -1,5 +1,5 @@
 import { FiberNode } from 'react-reconciler/src/fiber';
-import { HostText } from 'react-reconciler/src/workTags';
+import { HostComponent, HostText } from 'react-reconciler/src/workTags';
 import {
 	DOMElement,
 	updateFiberProps as updateFiberPropsFn
@@ -53,8 +53,8 @@ export function commitUpdate(fiber: FiberNode) {
 			const text = fiber.memoizedProps?.content;
 			// stateNode指向dom实例
 			return commitTextUpdate(fiber.stateNode, text);
-		// case HostComponent:
-		// 	return updateFiberProps(fiber.stateNode, fiber.memoizedProps);
+		case HostComponent:
+			return updateFiberProps(fiber.stateNode, fiber.memoizedProps);
 		default:
 			if (__DEV__) {
 				console.warn('未实现的Update类型', fiber);
