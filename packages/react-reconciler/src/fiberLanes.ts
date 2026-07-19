@@ -78,7 +78,7 @@ export function getNextLane(root: FiberRootNode): Lane {
 	if (pendingLanes === NoLanes) {
 		return NoLane;
 	}
-	let nextLane = NoLane;
+	const nextLane = NoLane;
 
 	// // 排除掉挂起的lane
 	// const suspendedLanes = pendingLanes & ~root.suspendedLanes;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 
 // function App() {
@@ -20,12 +20,18 @@ import ReactDOM from 'react-dom';
 // }
 
 function App() {
-	const [num, setNum] = useState<number>(100);
+	const [num, setNum] = useState<number>(0);
 	// window.setNum = setNum;
-	const arr =
-		num % 2 === 0
-			? [<li key="1">1</li>, <li key="2">2</li>, <li key="3">3</li>]
-			: [<li key="3">3</li>, <li key="2">2</li>, <li key="1">1</li>];
+	// @ts-ignore
+	useEffect(() => {
+		console.log('App mount');
+	}, []);
+	useEffect(() => {
+		console.log('num change create', num);
+		return () => {
+			console.log('num change destroy');
+		};
+	}, [num]);
 
 	console.log('num', num);
 	// return <ul onClick={() => setNum((_v) => _v + 1)}>{arr}</ul>;
@@ -33,24 +39,20 @@ function App() {
 		<ul
 			onClick={() => {
 				setNum((_v) => _v + 1);
-				setNum((_v) => _v + 1);
-				setNum((_v) => _v + 1);
 			}}
 		>
-			<>
-				<li key="1">1</li>
-				<li key="2">2</li>
-			</>
-			<li key="3">3</li>
-			<li key="4">4</li>
-			{arr}
+			{num % 2 === 0 ? <Child /> : 'noop'}
 		</ul>
 	);
 }
 
 function Child() {
-	// const now = performance.now();
-	// while (performance.now() - now < 4) {}
+	useEffect(() => {
+		console.log('Child mount');
+		return () => {
+			console.log('Child unmount');
+		};
+	}, []);
 	return <li>big - 2121react</li>;
 }
 

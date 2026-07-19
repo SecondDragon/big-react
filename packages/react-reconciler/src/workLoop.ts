@@ -1,9 +1,19 @@
-import { createWorkInProgress, FiberNode, FiberRootNode } from './fiber';
+import {
+	createWorkInProgress,
+	FiberNode,
+	FiberRootNode,
+	PendingPassiveEffects
+} from './fiber';
 import { beginWork } from './beginWork';
 import { completeWork } from './completeWork';
 import { HostRoot } from './workTags';
-import { MutationMask, NoFlags } from './fiberFlags';
-import { commitMutationEffect } from './commitWork';
+import { MutationMask, NoFlags, PassiveMask } from './fiberFlags';
+import {
+	commitHookEffectListCreate,
+	commitHookEffectListDestroy,
+	commitHookEffectListUnmount,
+	commitMutationEffect
+} from './commitWork';
 import {
 	getHighestPriorityLane,
 	Lane,
@@ -13,12 +23,17 @@ import {
 	SyncLane
 } from './fiberLanes';
 import { flushSyncCallbacks, scheduleSyncCallback } from './syncTaskQueue';
+import {
+	unstable_NormalPriority as NormalPriority,
+	unstable_scheduleCallback as scheduleCallback
+} from 'scheduler';
 import { scheduleMicroTask } from 'hostConfig';
+import { HookHasEffect, Passive } from './hookEffectTags';
 
 let workInProgress: FiberNode | null = null;
 // 本次更新的lane
 let wipRootRenderLane: Lane = NoLane;
-
+let rootDoesHasPassiveEffects = false;
 /**
  * 准备一个新的工作栈。
  * 调用 createWorkInProgress 基于 root.current（旧 HostRoot fiber）创建/复用 workInProgress。
@@ -154,39 +169,142 @@ function performSyncWorkOnRoot(root: FiberRootNode, lane: Lane) {
  */
 function commitRoot(root: FiberRootNode) {
 	const finishedWork = root.finishedWork;
+
 	if (finishedWork === null) {
 		return;
 	}
+
 	if (__DEV__) {
 		console.warn('commit阶段开始', finishedWork);
 	}
-
 	const lane = root.finishedLane;
+
 	if (lane === NoLane && __DEV__) {
-		console.error('commit阶段finishedLane 不应该是NoLane');
+		console.error('commit阶段finishedLane不应该是NoLane');
 	}
 
 	// 重置
 	root.finishedWork = null;
 	root.finishedLane = NoLane;
+
 	markRootFinished(root, lane);
 
-	// 判断三个阶段是否存在
+	if (
+		(finishedWork.flags & PassiveMask) !== NoFlags ||
+		(finishedWork.subtreeFlags & PassiveMask) !== NoFlags
+	) {
+		if (!rootDoesHasPassiveEffects) {
+			rootDoesHasPassiveEffects = true;
+			// 调度副作用
+			scheduleCallback(NormalPriority, () => {
+				// 执行副作用
+				flushPassiveEffects(root.pendingPassiveEffects);
+				return;
+			});
+		}
+	}
+
+	// 判断是否存在3个子阶段需要执行的操作
+	// root flags root subtreeFlags
 	const subtreeHasEffect =
 		(finishedWork.subtreeFlags & MutationMask) !== NoFlags;
 	const rootHasEffect = finishedWork.flags & MutationMask;
 
 	if (subtreeHasEffect || rootHasEffect) {
 		// beforeMutation 阶段
-		commitMutationEffect(finishedWork);
+		commitMutationEffect(finishedWork, root);
 		// mutation 阶段
 		// layout 阶段
 		root.current = finishedWork;
 	} else {
-		console.log('23423432');
 		root.current = finishedWork;
 		// 	root.current就是新的 HostRoot，它有child/memoizedState，会在更新时使用
 	}
+	// 重置
+	rootDoesHasPassiveEffects = false;
+	ensureRootIsScheduled(root);
+}
+/**
+ * 浏览器绘制后异步执行 useEffect 回调的总入口，Passive 子阶段的实际执行者。
+ * 由 commitRoot 中检测到的 PassiveEffect 标记触发 scheduleCallback(NormalPriority, ...)
+ * 调度，保证不阻塞 DOM 提交和浏览器绘制。
+ *
+ * 执行流程（顺序非常重要，不能调换）：
+ * 1. 先执行所有 unmount 队列中的 destroy（被删除组件的清理）
+ * 2. 清空 unmount 队列
+ * 3. 对所有 update 队列中的 Effect 执行 destroy（清理上一次副作用）
+ * 4. 再对所有 update 队列中的 Effect 执行 create（启动本次副作用）
+ *    → create 的返回值赋给 effect.destroy，供下一次使用
+ * 5. 清空 update 队列
+ * 6. flushSyncCallbacks：执行 effect 中 setState 触发的同步更新
+ *
+ * 为什么 unmount 要在 update 之前？
+ *   删除的组件可能持有对新组件有影响的资源（如全局事件监听、定时器），
+ *   先清理再启动，避免新旧副作用同时存在产生的冲突。
+ *
+ * 为什么 destroy 和 create 要分两次 forEach？
+ *   同一组件的多个 useEffect 之间、父子组件的 useEffect 之间，
+ *   可能通过 destroy 清理共享资源（如父组件 destroy 关闭数据库连接，
+ *   子组件 create 需要重新打开）。如果交错执行 destroy → create → destroy → create，
+ *   后一个 destroy 可能清掉前一个 create 刚建立的状态。
+ *   统一先 destroy 完所有，再统一 create 所有，保证"清干净再开始"。
+ *
+ * 具体举例：
+ *   组件树：<App><Child /></App>，两者各有 useEffect(() => {...}, [count])
+ *
+ *   点击按钮触发 count: 0 → 1：
+ *     render 阶段：App 和 Child 都被打上 PassiveEffect 标记
+ *     commit 阶段：
+ *       commitMutationEffect 遍历：
+ *         → commitPassiveEffect(App, root, 'update')
+ *           → pendingPassiveEffects.update.push(App.lastEffect)
+ *         → commitPassiveEffect(Child, root, 'update')
+ *           → pendingPassiveEffects.update.push(Child.lastEffect)
+ *     浏览器绘制后，flushPassiveEffects 执行：
+ *       ① unmount 队列为空，跳过
+ *       ② destroy 阶段：
+ *          commitHookEffectListDestroy(Passive|HookHasEffect, App.lastEffect)
+ *            → 打印 "App cleanup 0"
+ *          commitHookEffectListDestroy(Passive|HookHasEffect, Child.lastEffect)
+ *            → 打印 "Child cleanup 0"
+ *       ③ create 阶段：
+ *          commitHookEffectListCreate(Passive|HookHasEffect, App.lastEffect)
+ *            → 打印 "App effect 1"，destroy 被赋值为新的 cleanup
+ *          commitHookEffectListCreate(Passive|HookHasEffect, Child.lastEffect)
+ *            → 打印 "Child effect 1"，destroy 被赋值为新的 cleanup
+ *       ④ 执行顺序总结：App cleanup → Child cleanup → App effect → Child effect
+ *
+ * 结论：
+ *   该函数是 useEffect 异步执行的"总调度"。通过 pendingPassiveEffects
+ *   把 commit 阶段（同步）和 effect 执行（异步）解耦，既保证了 DOM 提交的原子性，
+ *   又让 effect 不会阻塞浏览器绘制。返回值 didFlushPassiveEffect 供
+ *   ensureRootIsScheduled 判断是否有新的同步更新被触发（effect 中的 setState）。
+ *
+ * @param pendingPassiveEffects FiberRootNode 上挂载的 Effect 收集队列
+ * @returns 本次是否真正执行了至少一个 Effect 回调
+ */
+function flushPassiveEffects(pendingPassiveEffects: PendingPassiveEffects) {
+	let didFlushPassiveEffect = false;
+	pendingPassiveEffects.unmount.forEach((effect) => {
+		didFlushPassiveEffect = true;
+		// 这里卸载就不管deps 有没有改动了
+		commitHookEffectListUnmount(Passive, effect);
+	});
+	pendingPassiveEffects.unmount = [];
+
+	pendingPassiveEffects.update.forEach((effect) => {
+		didFlushPassiveEffect = true;
+		// 先执行destroy
+		commitHookEffectListDestroy(Passive | HookHasEffect, effect);
+	});
+	pendingPassiveEffects.update.forEach((effect) => {
+		didFlushPassiveEffect = true;
+		// 再执行create
+		commitHookEffectListCreate(Passive | HookHasEffect, effect);
+	});
+	pendingPassiveEffects.update = [];
+	flushSyncCallbacks();
+	return didFlushPassiveEffect;
 }
 
 /**

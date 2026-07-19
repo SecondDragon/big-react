@@ -1,5 +1,5 @@
 import { Action } from 'shared/ReactTypes';
-
+import { HookDeps } from 'react-reconciler/src/fiberHooks';
 /**
  * Hook 分发器接口。
  * renderWithHooks 根据 mount / update 切换不同的 Dispatcher 实例，
@@ -7,6 +7,7 @@ import { Action } from 'shared/ReactTypes';
  */
 export interface Dispatcher {
 	useState: <T>(initialState: (() => T) | T) => [T, Dispatch<T>];
+	useEffect: (callback: () => void | void, deps: HookDeps | undefined) => void;
 }
 
 /**

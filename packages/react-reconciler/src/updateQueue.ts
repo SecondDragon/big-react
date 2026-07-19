@@ -1,5 +1,6 @@
 import { Action } from 'shared/ReactTypes';
 import { Lane } from './fiberLanes';
+import { Dispatch } from 'react/src/currentDispatcher';
 
 /** 一次更新请求 */
 export interface Update<State> {
@@ -17,7 +18,7 @@ export interface UpdateQueue<State> {
 	shared: {
 		pending: Update<State> | null;
 	};
-	dispatch: (action: unknown) => void;
+	dispatch: Dispatch<State> | null;
 }
 
 /**
@@ -44,7 +45,8 @@ export const createUpdateQueue = <State>() => {
 	return {
 		shared: {
 			pending: null
-		}
+		},
+		dispatch: null
 	} as UpdateQueue<State>;
 };
 

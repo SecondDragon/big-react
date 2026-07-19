@@ -53,16 +53,8 @@ describe('click once with 3 setNum calls', () => {
 			const [num, setNum] = useState(100);
 			const arr =
 				num % 2 === 0
-					? [
-							<li key="1">1</li>,
-							<li key="2">2</li>,
-							<li key="3">3</li>
-					  ]
-					: [
-							<li key="3">3</li>,
-							<li key="2">2</li>,
-							<li key="1">1</li>
-					  ];
+					? [<li key="1">1</li>, <li key="2">2</li>, <li key="3">3</li>]
+					: [<li key="3">3</li>, <li key="2">2</li>, <li key="1">1</li>];
 			counts.nums.push(num);
 			return (
 				<ul
@@ -115,8 +107,8 @@ describe('click once with 3 setNum calls', () => {
 		console.log = originalLog;
 		console.warn = originalWarn;
 
-		const domText = Array.from(container.querySelectorAll('li')).map((li) =>
-			li.textContent
+		const domText = Array.from(container.querySelectorAll('li')).map(
+			(li) => li.textContent
 		);
 
 		originalLog(

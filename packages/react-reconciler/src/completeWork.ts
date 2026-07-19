@@ -1,6 +1,18 @@
 import { FiberNode } from './fiber';
-import { Fragment, FunctionComponent, HostComponent, HostRoot, HostText } from './workTags';
-import { appendInitialChild, Container, createInstance, createTextInstance, updateFiberProps } from 'hostConfig';
+import {
+	Fragment,
+	FunctionComponent,
+	HostComponent,
+	HostRoot,
+	HostText
+} from './workTags';
+import {
+	appendInitialChild,
+	Container,
+	createInstance,
+	createTextInstance,
+	updateFiberProps
+} from 'hostConfig';
 import { NoFlags, Update } from './fiberFlags';
 
 /**

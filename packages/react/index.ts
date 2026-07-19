@@ -17,6 +17,11 @@ export const useState: Dispatcher['useState'] = (initialState) => {
 	return dispatcher.useState(initialState);
 };
 
+export const useEffect: Dispatcher['useEffect'] = (create, deps) => {
+	const dispatcher = resolveDispatcher();
+	return dispatcher.useEffect(create, deps);
+};
+
 /**
  * 内部数据共享层。将 currentDispatcher 暴露给 react-reconciler，
  * 使得 renderWithHooks 可以在执行组件函数前切换 Dispatcher。

@@ -8,6 +8,7 @@ import {
 import { Flags, NoFlags } from './fiberFlags';
 import { Container } from 'hostConfig';
 import { Lane, Lanes, NoLane, NoLanes } from './fiberLanes';
+import { Effect } from './fiberHooks';
 
 export class FiberNode {
 	/**
@@ -100,6 +101,14 @@ export class FiberNode {
 		this.deletions = null;
 	}
 }
+
+export interface PendingPassiveEffects {
+	// 被删除的组件的，单独一类，全是 destroy
+	unmount: Effect[];
+	// 更新时的包括 create和destroy
+	update: Effect[];
+}
+
 // Container 一般是dom节点，但是react可能不在web中渲染，所以不一定，类型才没有使用DOM
 /**
  * FiberRootNode 是每棵 fiber 树的"管理器"。
@@ -116,6 +125,7 @@ export class FiberRootNode {
 	pendingLanes: Lanes;
 	// 本次更新消费的lane
 	finishedLane: Lane;
+	pendingPassiveEffects: PendingPassiveEffects;
 
 	constructor(container: Container, hostRootFiber: FiberNode) {
 		this.container = container;
@@ -124,6 +134,10 @@ export class FiberRootNode {
 		this.finishedWork = null;
 		this.pendingLanes = NoLanes;
 		this.finishedLane = NoLane;
+		this.pendingPassiveEffects = {
+			unmount: [],
+			update: []
+		};
 	}
 }
 
