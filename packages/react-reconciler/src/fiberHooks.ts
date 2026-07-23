@@ -86,7 +86,7 @@ export function renderWithHooks(wip: FiberNode, lane: Lane) {
 		// 	更新
 		currentDispatcher.current = HookDispatcherOnUpdate;
 	} else {
-		console.log();
+		// console.log();
 		//在这里设置全局现在的Dispatcher
 		currentDispatcher.current = HookDispatcherOnMount;
 	}

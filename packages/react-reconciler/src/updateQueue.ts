@@ -144,6 +144,7 @@ export const processUpdateQueue = <State>(
 		let pending = pendingUpdate.next as Update<any>;
 
 		do {
+			//
 			const updateLane = pending?.lane;
 			if (updateLane === renderLane) {
 				const action = pending.action;

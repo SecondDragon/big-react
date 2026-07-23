@@ -1,4 +1,11 @@
 import { FiberRootNode } from './fiber';
+import ReactCurrentBatchConfig from 'react/src/currentBatchConfig';
+import {
+	unstable_getCurrentPriorityLevel,
+	unstable_ImmediatePriority,
+	unstable_NormalPriority,
+	unstable_UserBlockingPriority
+} from 'scheduler';
 
 export type Lane = number;
 export type Lanes = number;
@@ -15,7 +22,15 @@ export function mergeLanes(laneA: Lane, laneB: Lane): Lanes {
 	return laneA | laneB;
 }
 export function requestUpdateLane() {
-	return SyncLane;
+	const isTransition = ReactCurrentBatchConfig.transition !== null;
+	if (isTransition) {
+		return TransitionLane;
+	}
+
+	// 从上下文环境中获取Scheduler优先级，这个就是当前的优先级
+	const currentSchedulerPriority = unstable_getCurrentPriorityLevel();
+	const lane = schedulerPriorityToLane(currentSchedulerPriority);
+	return lane;
 }
 
 export function getHighestPriorityLane(lanes: Lanes): Lane {
@@ -91,4 +106,16 @@ export function getNextLane(root: FiberRootNode): Lane {
 	// 	}
 	// }
 	return nextLane;
+}
+export function schedulerPriorityToLane(schedulerPriority: number): Lane {
+	if (schedulerPriority === unstable_ImmediatePriority) {
+		return SyncLane;
+	}
+	if (schedulerPriority === unstable_UserBlockingPriority) {
+		return InputContinuousLane;
+	}
+	if (schedulerPriority === unstable_NormalPriority) {
+		return DefaultLane;
+	}
+	return NoLane;
 }

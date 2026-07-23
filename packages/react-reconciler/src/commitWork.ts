@@ -193,10 +193,11 @@ const commitMutationEffectOnFiber = (
 		// 非运算相当于移除ChildDeletion标记
 		finishedWork.flags &= ~ChildDeletion;
 	}
+	// 有PassiveEffect的就是 mount阶段的effect ，必须执行
 	if ((flags & PassiveEffect) !== NoFlags) {
 		// 收集回调
 		commitPassiveEffect(finishedWork, root, 'update');
-		// 移除PassiveEffect
+		// 移除PassiveEffect，代表着mount阶段的 effect 回调结束了
 		finishedWork.flags &= ~PassiveEffect;
 	}
 

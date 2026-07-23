@@ -6,9 +6,11 @@
 	"scripts": {
 		"build:dev": "rimraf dist && rollup --bundleConfigAsCjs --config scripts/rollup/dev.config.js",
 		"demo": "vite serve demos/test-fc --config scripts/vite/vite.config.js --force",
+		"demo:tearing": "vite serve demos/tearing --config scripts/vite/vite.config.js --force",
 		"demo:project": "vite --config scripts/vite/project.config.js",
 		"lint": "eslint --ext .ts,.jsx,.tsx --fix --quiet ./packages",
-		"test": "jest --config scripts/jest/jest.config.js"
+		"test": "jest --config scripts/jest/jest.config.js",
+		"test:filter": "jest --config scripts/jest/jest.config.js --testPathPattern"
 	},
 	"keywords": [],
 	"author": "",
@@ -17,6 +19,7 @@
 		"@babel/core": "^7.20.5",
 		"@babel/plugin-transform-react-jsx": "^7.19.0",
 		"@babel/preset-env": "^7.20.2",
+		"@babel/preset-typescript": "^7.29.7",
 		"@commitlint/cli": "^17.1.2",
 		"@commitlint/config-conventional": "^17.1.0",
 		"@rollup/plugin-alias": "^4.0.2",
@@ -48,5 +51,6 @@
 		"@rollup/plugin-replace": "^5.0.1",
 		"react-reconciler": "^0.33.0",
 		"scheduler": "^0.23.0"
-	}
+	},
+	"packageManager": "pnpm@11.15.1+sha512.81350b07e53c9538a02f1f2303b4290fa2d7be04e56e2a970c4cc4b417dc761de196edabd49d55c7dc9580db81007c44143e4e3d7e462b3000d23c255122d065"
 }

@@ -7,7 +7,8 @@ module.exports = {
 	moduleDirectories: [...defaults.moduleDirectories, 'dist/node_modules'],
 	testEnvironment: 'jsdom',
 	moduleNameMapper: {
-		'^scheduler$': '<rootDir>/node_modules/scheduler/unstable_mock.js'
+		'^scheduler$': '<rootDir>/node_modules/scheduler/unstable_mock.js',
+		'^hostConfig$': '<rootDir>/packages/react-noop-renderer/src/hostConfig.ts'
 	},
 	fakeTimers: {
 		enableGlobally: true,
